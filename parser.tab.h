@@ -54,28 +54,54 @@ extern int yydebug;
     YYEOF = 0,                     /* "end of file"  */
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
-    VAR = 258,                     /* VAR  */
-    INTEIRO = 259,                 /* INTEIRO  */
-    TEXTO = 260,                   /* TEXTO  */
-    CONFIG = 261,                  /* CONFIG  */
-    FIM = 262,                     /* FIM  */
-    REPITA = 263,                  /* REPITA  */
-    COMO = 264,                    /* COMO  */
-    COM = 265,                     /* COM  */
+    IDENTIFICADOR = 258,           /* IDENTIFICADOR  */
+    NUMERO = 259,                  /* NUMERO  */
+    STRING = 260,                  /* STRING  */
+    VAR = 261,                     /* VAR  */
+    INTEIRO = 262,                 /* INTEIRO  */
+    TEXTO = 263,                   /* TEXTO  */
+    BOOLEANO = 264,                /* BOOLEANO  */
+    CONFIG = 265,                  /* CONFIG  */
     CONFIGURAR = 266,              /* CONFIGURAR  */
     CONFIGURARPWM = 267,           /* CONFIGURARPWM  */
-    CONECTARWIFI = 268,            /* CONECTARWIFI  */
-    AJUSTARPWM = 269,              /* AJUSTARPWM  */
-    ESPERAR = 270,                 /* ESPERAR  */
-    IGUAL = 271,                   /* IGUAL  */
-    PONTOEVIRGULA = 272,           /* PONTOEVIRGULA  */
-    DOISPONTOS = 273,              /* DOISPONTOS  */
-    NUMERO = 274,                  /* NUMERO  */
-    IDENTIFICADOR = 275,           /* IDENTIFICADOR  */
-    STRING = 276,                  /* STRING  */
-    SAIDA = 277,                   /* SAIDA  */
-    FREQUENCIA = 278,              /* FREQUENCIA  */
-    RESOLUCAO = 279                /* RESOLUCAO  */
+    CONFIGURARSERIAL = 268,        /* CONFIGURARSERIAL  */
+    CONECTARWIFI = 269,            /* CONECTARWIFI  */
+    LIGAR = 270,                   /* LIGAR  */
+    DESLIGAR = 271,                /* DESLIGAR  */
+    AJUSTARPWM = 272,              /* AJUSTARPWM  */
+    ESPERAR = 273,                 /* ESPERAR  */
+    ESCREVER_SERIAL = 274,         /* ESCREVER_SERIAL  */
+    LER_SERIAL = 275,              /* LER_SERIAL  */
+    ENVIAR_HTTP = 276,             /* ENVIAR_HTTP  */
+    LER_DIGITAL = 277,             /* LER_DIGITAL  */
+    LER_ANALOGICO = 278,           /* LER_ANALOGICO  */
+    SE = 279,                      /* SE  */
+    SENAO = 280,                   /* SENAO  */
+    ENTAO = 281,                   /* ENTAO  */
+    ENQUANTO = 282,                /* ENQUANTO  */
+    REPITA = 283,                  /* REPITA  */
+    FIM = 284,                     /* FIM  */
+    COM = 285,                     /* COM  */
+    COMO = 286,                    /* COMO  */
+    SAIDA = 287,                   /* SAIDA  */
+    FREQUENCIA = 288,              /* FREQUENCIA  */
+    RESOLUCAO = 289,               /* RESOLUCAO  */
+    IGUAL = 290,                   /* IGUAL  */
+    IGUAL_IGUAL = 291,             /* IGUAL_IGUAL  */
+    DIFERENTE = 292,               /* DIFERENTE  */
+    MENOR = 293,                   /* MENOR  */
+    MAIOR = 294,                   /* MAIOR  */
+    MENOR_IGUAL = 295,             /* MENOR_IGUAL  */
+    MAIOR_IGUAL = 296,             /* MAIOR_IGUAL  */
+    MAIS = 297,                    /* MAIS  */
+    MENOS = 298,                   /* MENOS  */
+    MULTIPLICACAO = 299,           /* MULTIPLICACAO  */
+    DIVISAO = 300,                 /* DIVISAO  */
+    MODULO = 301,                  /* MODULO  */
+    VIRGULA = 302,                 /* VIRGULA  */
+    PONTOEVIRGULA = 303,           /* PONTOEVIRGULA  */
+    DOISPONTOS = 304,              /* DOISPONTOS  */
+    VALOR = 305                    /* VALOR  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -86,10 +112,11 @@ union YYSTYPE
 {
 #line 15 "parser.y"
 
-    int num;
     char *str;
+    int num;
+    char *id;
 
-#line 93 "parser.tab.h"
+#line 120 "parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

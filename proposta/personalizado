@@ -1,6 +1,5 @@
 // Declaração de variáveis
-var inteiro: ledPin;
-var inteiro: brilho;
+var inteiro: ledPin, brilho;
 var texto: ssid;
 var inteiro: senha;
 
