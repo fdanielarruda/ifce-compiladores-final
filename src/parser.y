@@ -329,18 +329,41 @@ int main(int argc, char **argv) {
             perror("Erro ao abrir o arquivo");
             return 1;
         }
+    } else {
+        fprintf(stderr, "Uso: %s <arquivo de entrada>\n", argv[0]);
+        return 1;
     }
 
     yyparse();
 
     if (codigoGerado) {
-        FILE *arquivo = fopen("resultados/output.cpp", "w");
+        // Obtém o nome do arquivo de entrada
+        char *entrada = argv[1];
+        char *nomeArquivo = strrchr(entrada, '/'); // Obtém apenas o nome do arquivo
+        nomeArquivo = (nomeArquivo) ? nomeArquivo + 1 : entrada;
+
+        // Substitui a extensão por .cpp
+        char saida[256];
+        snprintf(saida, sizeof(saida), "langs/%s", nomeArquivo);
+        
+        // Substitui a extensão original por .cpp
+        char *ponto = strrchr(saida, '.');
+        if (ponto) {
+            strcpy(ponto, ".cpp");
+        } else {
+            strcat(saida, ".cpp");
+        }
+
+        // Cria o arquivo de saída
+        FILE *arquivo = fopen(saida, "w");
         if (arquivo) {
             fprintf(arquivo, "%s", codigoGerado);
             fclose(arquivo);
+            printf("Código gerado salvo em: %s\n", saida);
         } else {
             perror("Erro ao criar o arquivo de saída");
         }
+
         free(codigoGerado);
     }
 
