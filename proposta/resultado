@@ -10,7 +10,8 @@ const int canalPWM = 0;
 const int frequencia = 5000;
 const int resolucao = 8;
 
-void setup() {
+void setup()
+{
   ledPin = 2;
   ssid = "MinhaRedeWiFi";
   senha = "MinhaSenhaWiFi";
@@ -21,14 +22,16 @@ void setup() {
   ledcAttachPin(ledPin, canalPWM);
 
   WiFi.begin(ssid.c_str(), senha.c_str());
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
     Serial.println("Conectando ao WiFi...");
   }
   Serial.println("Conectado ao WiFi!");
 }
 
-void loop() {
+void loop()
+{
   brilho = 128;
   ledcWrite(canalPWM, brilho);
   delay(1000);

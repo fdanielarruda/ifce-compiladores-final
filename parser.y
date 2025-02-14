@@ -100,7 +100,7 @@ listaIdentificadores:
 configuracao:
     CONFIG comandos FIM {
         char *codigo = malloc(strlen($2) + 50);
-        sprintf(codigo, "void setup() {\n%s}\n", $2);
+        sprintf(codigo, "\nvoid setup()\n{\n%s}\n", $2);
         $$ = codigo;
     }
     ;
@@ -127,7 +127,7 @@ comando:
 atribuicao:
     IDENTIFICADOR IGUAL expressao PONTOEVIRGULA {
         char *codigo = malloc(strlen($1) + strlen($3) + 10);
-        sprintf(codigo, "%s = %s;", $1, $3);
+        sprintf(codigo, "%s = %s;\n", $1, $3);
         $$ = codigo;
     }
     ;
@@ -169,7 +169,7 @@ expressao:
 configuracaoPino:
     CONFIGURAR IDENTIFICADOR COMO SAIDA PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + 30);
-        sprintf(codigo, "pinMode(%s, OUTPUT);", $2);
+        sprintf(codigo, "pinMode(%s, OUTPUT);\n", $2);
         $$ = codigo;
     }
     ;
@@ -177,7 +177,7 @@ configuracaoPino:
 configuracaoPWM:
     CONFIGURARPWM IDENTIFICADOR COM FREQUENCIA NUMERO RESOLUCAO NUMERO PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + 50);
-        sprintf(codigo, "ledcSetup(%s, %d, %d);", $2, $5, $7);
+        sprintf(codigo, "ledcSetup(%s, %d, %d);\n", $2, $5, $7);
         $$ = codigo;
     }
     ;
@@ -185,7 +185,7 @@ configuracaoPWM:
 conexaoWifi:
     CONECTARWIFI IDENTIFICADOR IDENTIFICADOR PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + strlen($3) + 170);
-        sprintf(codigo, "WiFi.begin(%s.c_str(), %s.c_str());\nwhile (WiFi.status() != WL_CONNECTED) {\n    delay(500);\n    Serial.println(\"Conectando ao WiFi...\");\n}\nSerial.println(\"Conectado ao WiFi!\");", $2, $3);
+        sprintf(codigo, "WiFi.begin(%s.c_str(), %s.c_str());\nwhile (WiFi.status() != WL_CONNECTED)\n{\n    delay(500);\n    Serial.println(\"Conectando ao WiFi...\");\n}\nSerial.println(\"Conectado ao WiFi!\");\n", $2, $3);
         $$ = codigo;
     }
     ;
@@ -219,47 +219,47 @@ repeticao:
 operacaoHardware:
     LIGAR IDENTIFICADOR PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + 20);
-        sprintf(codigo, "digitalWrite(%s, HIGH);", $2);
+        sprintf(codigo, "digitalWrite(%s, HIGH);\n", $2);
         $$ = codigo;
     }
     | DESLIGAR IDENTIFICADOR PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + 25);
-        sprintf(codigo, "digitalWrite(%s, LOW);", $2);
+        sprintf(codigo, "digitalWrite(%s, LOW);\n", $2);
         $$ = codigo;
     }
     | AJUSTARPWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + strlen($5) + 40);
-        sprintf(codigo, "ledcWrite(%s, %s);", $2, $5);
+        sprintf(codigo, "ledcWrite(%s, %s);\n", $2, $5);
         $$ = codigo;
     }
     | ESPERAR NUMERO PONTOEVIRGULA {
         char *codigo = malloc(20);
-        sprintf(codigo, "delay(%d);", $2);
+        sprintf(codigo, "delay(%d);\n", $2);
         $$ = codigo;
     }
     | ESCREVER_SERIAL STRING PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + 30);
-        sprintf(codigo, "Serial.println(%s);", $2);
+        sprintf(codigo, "Serial.println(%s);\n", $2);
         $$ = codigo;
     }
     | LER_SERIAL IDENTIFICADOR PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + 30);
-        sprintf(codigo, "%s = Serial.readString();", $2);
+        sprintf(codigo, "%s = Serial.readString();\n", $2);
         $$ = codigo;
     }
     | ENVIAR_HTTP STRING PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + 50);
-        sprintf(codigo, "http.begin(%s);\nhttp.GET();", $2);
+        sprintf(codigo, "http.begin(%s);\nhttp.GET();\n", $2);
         $$ = codigo;
     }
     | LER_DIGITAL IDENTIFICADOR PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + 30);
-        sprintf(codigo, "%s = digitalRead(%s);", $2, $2);
+        sprintf(codigo, "%s = digitalRead(%s);\n", $2, $2);
         $$ = codigo;
     }
     | LER_ANALOGICO IDENTIFICADOR PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + 30);
-        sprintf(codigo, "%s = analogRead(%s);", $2, $2);
+        sprintf(codigo, "%s = analogRead(%s);\n", $2, $2);
         $$ = codigo;
     }
     ;
@@ -267,7 +267,7 @@ operacaoHardware:
 loop:
     REPITA comandos FIM {
         char *codigo = malloc(strlen($2) + 30);
-        sprintf(codigo, "void loop() {\n%s}\n", $2);
+        sprintf(codigo, "\nvoid loop()\n{\n%s}\n", $2);
         $$ = codigo;
     }
     ;

@@ -1301,7 +1301,7 @@ yyreduce:
 #line 101 "parser.y"
                         {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 50);
-        sprintf(codigo, "void setup() {\n%s}\n", (yyvsp[-1].str));
+        sprintf(codigo, "\nvoid setup()\n{\n%s}\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1308 "parser.tab.c"
@@ -1328,7 +1328,7 @@ yyreduce:
 #line 128 "parser.y"
                                                 {
         char *codigo = malloc(strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 10);
-        sprintf(codigo, "%s = %s;", (yyvsp[-3].str), (yyvsp[-1].str));
+        sprintf(codigo, "%s = %s;\n", (yyvsp[-3].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1335 "parser.tab.c"
@@ -1399,7 +1399,7 @@ yyreduce:
 #line 170 "parser.y"
                                                       {
         char *codigo = malloc(strlen((yyvsp[-3].str)) + 30);
-        sprintf(codigo, "pinMode(%s, OUTPUT);", (yyvsp[-3].str));
+        sprintf(codigo, "pinMode(%s, OUTPUT);\n", (yyvsp[-3].str));
         (yyval.str) = codigo;
     }
 #line 1406 "parser.tab.c"
@@ -1409,7 +1409,7 @@ yyreduce:
 #line 178 "parser.y"
                                                                                      {
         char *codigo = malloc(strlen((yyvsp[-6].str)) + 50);
-        sprintf(codigo, "ledcSetup(%s, %d, %d);", (yyvsp[-6].str), (yyvsp[-3].num), (yyvsp[-1].num));
+        sprintf(codigo, "ledcSetup(%s, %d, %d);\n", (yyvsp[-6].str), (yyvsp[-3].num), (yyvsp[-1].num));
         (yyval.str) = codigo;
     }
 #line 1416 "parser.tab.c"
@@ -1419,7 +1419,7 @@ yyreduce:
 #line 186 "parser.y"
                                                            {
         char *codigo = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[-1].str)) + 170);
-        sprintf(codigo, "WiFi.begin(%s.c_str(), %s.c_str());\nwhile (WiFi.status() != WL_CONNECTED) {\n    delay(500);\n    Serial.println(\"Conectando ao WiFi...\");\n}\nSerial.println(\"Conectado ao WiFi!\");", (yyvsp[-2].str), (yyvsp[-1].str));
+        sprintf(codigo, "WiFi.begin(%s.c_str(), %s.c_str());\nwhile (WiFi.status() != WL_CONNECTED)\n{\n    delay(500);\n    Serial.println(\"Conectando ao WiFi...\");\n}\nSerial.println(\"Conectado ao WiFi!\");\n", (yyvsp[-2].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1426 "parser.tab.c"
@@ -1471,7 +1471,7 @@ yyreduce:
 #line 220 "parser.y"
                                       {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 20);
-        sprintf(codigo, "digitalWrite(%s, HIGH);", (yyvsp[-1].str));
+        sprintf(codigo, "digitalWrite(%s, HIGH);\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1478 "parser.tab.c"
@@ -1481,7 +1481,7 @@ yyreduce:
 #line 225 "parser.y"
                                            {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 25);
-        sprintf(codigo, "digitalWrite(%s, LOW);", (yyvsp[-1].str));
+        sprintf(codigo, "digitalWrite(%s, LOW);\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1488 "parser.tab.c"
@@ -1491,7 +1491,7 @@ yyreduce:
 #line 230 "parser.y"
                                                                      {
         char *codigo = malloc(strlen((yyvsp[-4].str)) + strlen((yyvsp[-1].str)) + 40);
-        sprintf(codigo, "ledcWrite(%s, %s);", (yyvsp[-4].str), (yyvsp[-1].str));
+        sprintf(codigo, "ledcWrite(%s, %s);\n", (yyvsp[-4].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1498 "parser.tab.c"
@@ -1501,7 +1501,7 @@ yyreduce:
 #line 235 "parser.y"
                                    {
         char *codigo = malloc(20);
-        sprintf(codigo, "delay(%d);", (yyvsp[-1].num));
+        sprintf(codigo, "delay(%d);\n", (yyvsp[-1].num));
         (yyval.str) = codigo;
     }
 #line 1508 "parser.tab.c"
@@ -1511,7 +1511,7 @@ yyreduce:
 #line 240 "parser.y"
                                            {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
-        sprintf(codigo, "Serial.println(%s);", (yyvsp[-1].str));
+        sprintf(codigo, "Serial.println(%s);\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1518 "parser.tab.c"
@@ -1521,7 +1521,7 @@ yyreduce:
 #line 245 "parser.y"
                                              {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
-        sprintf(codigo, "%s = Serial.readString();", (yyvsp[-1].str));
+        sprintf(codigo, "%s = Serial.readString();\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1528 "parser.tab.c"
@@ -1531,7 +1531,7 @@ yyreduce:
 #line 250 "parser.y"
                                        {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 50);
-        sprintf(codigo, "http.begin(%s);\nhttp.GET();", (yyvsp[-1].str));
+        sprintf(codigo, "http.begin(%s);\nhttp.GET();\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1538 "parser.tab.c"
@@ -1541,7 +1541,7 @@ yyreduce:
 #line 255 "parser.y"
                                               {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
-        sprintf(codigo, "%s = digitalRead(%s);", (yyvsp[-1].str), (yyvsp[-1].str));
+        sprintf(codigo, "%s = digitalRead(%s);\n", (yyvsp[-1].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1548 "parser.tab.c"
@@ -1551,7 +1551,7 @@ yyreduce:
 #line 260 "parser.y"
                                                 {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
-        sprintf(codigo, "%s = analogRead(%s);", (yyvsp[-1].str), (yyvsp[-1].str));
+        sprintf(codigo, "%s = analogRead(%s);\n", (yyvsp[-1].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1558 "parser.tab.c"
@@ -1561,7 +1561,7 @@ yyreduce:
 #line 268 "parser.y"
                         {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
-        sprintf(codigo, "void loop() {\n%s}\n", (yyvsp[-1].str));
+        sprintf(codigo, "\nvoid loop()\n{\n%s}\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
 #line 1568 "parser.tab.c"

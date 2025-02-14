@@ -3,13 +3,17 @@
 
 int ledPin, brilho;
 String ssid, senha;
+
 void setup()
 {
     ledPin = 2;
     ssid = "MinhaRedeWiFi";
     senha = "MinhaSenhaWiFi";
+    
     pinMode(ledPin, OUTPUT);
+
     ledcSetup(ledPin, 5000, 8);
+
     WiFi.begin(ssid.c_str(), senha.c_str());
     while (WiFi.status() != WL_CONNECTED)
     {
@@ -18,6 +22,7 @@ void setup()
     }
     Serial.println("Conectado ao WiFi!");
 }
+
 void loop()
 {
     brilho = 128;
