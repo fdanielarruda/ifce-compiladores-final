@@ -13,25 +13,23 @@ sudo apt install flex bison gcc -y
 
 ## Compilação
 
-Após instalar as dependências, siga os passos abaixo para compilar o compilador:
+Após instalar as dependências, basta executar o seguinte comando para compilar o compilador:
 
 ```sh
-flex lexer.l
-bison -d parser.y
-gcc lex.yy.c parser.tab.c -o compilador
+./build.sh
 ```
 
-Isso gerará um executável chamado `compilador`.
+Isso gerará o executável `compiler`.
 
 ## Execução
 
-Para executar o compilador, use o seguinte comando:
+Para executar o compilador, utilize o comando:
 
 ```sh
-./compilador proposta/personalizado
+./compiler langs/example1.lang
 ```
 
-O arquivo `proposta/personalizado` deve conter o código-fonte na linguagem personalizada a ser analisado pelo compilador.
+O arquivo `langs/example1.lang` deve conter o código-fonte na linguagem personalizada a ser analisado pelo compilador.
 
 ## Estrutura do Projeto
 
@@ -39,14 +37,15 @@ O arquivo `proposta/personalizado` deve conter o código-fonte na linguagem pers
 - `parser.y`: Definições da análise sintática e geração de código.
 - `lex.yy.c`: Código gerado pelo **Flex**.
 - `parser.tab.c` e `parser.tab.h`: Código gerado pelo **Bison**.
-- `compilador`: Executável final.
+- `build.sh`: Script para compilar o projeto.
+- `compiler`: Executável final.
 
 ## Observações
 
-Caso tenha problemas com permissões ao executar `./compilador`, use:
+Caso tenha problemas com permissões ao executar `./compiler`, utilize:
 
 ```sh
-chmod +x compilador
+chmod +x compiler
 ```
 
 Se precisar de mais informações sobre Flex e Bison:
@@ -55,4 +54,3 @@ Se precisar de mais informações sobre Flex e Bison:
 
 ---
 **Desenvolvido para o projeto de compiladores no IFCE.**
-
