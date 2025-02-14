@@ -9,6 +9,7 @@ int yylex();
 extern FILE *yyin;
 
 char *codigoGerado = NULL;
+char *tipo_atual = NULL;
 
 void appendCode(const char *novoCodigo) {
     if (codigoGerado == NULL) {
@@ -76,23 +77,44 @@ declaracoes:
 
 declaracao:
     VAR tipo DOISPONTOS listaIdentificadores PONTOEVIRGULA {
-        char *codigo = malloc(strlen($2) + strlen($4) + 20);
-        sprintf(codigo, "%s %s;", $2, $4);
-        $$ = codigo;
+        $$ = strdup($4);
     }
     ;
 
 tipo:
-    INTEIRO { $$ = strdup("int"); }
-    | TEXTO { $$ = strdup("String"); }
-    | BOOLEANO { $$ = strdup("bool"); }
+    INTEIRO { 
+        if (tipo_atual) free(tipo_atual);
+        tipo_atual = strdup("int"); 
+        $$ = tipo_atual; 
+    }
+    | TEXTO { 
+        if (tipo_atual) free(tipo_atual);
+        tipo_atual = strdup("String"); 
+        $$ = tipo_atual; 
+    }
+    | BOOLEANO { 
+        if (tipo_atual) free(tipo_atual);
+        tipo_atual = strdup("bool"); 
+        $$ = tipo_atual; 
+    }
     ;
 
 listaIdentificadores:
-    IDENTIFICADOR { $$ = strdup($1); }
+    IDENTIFICADOR { 
+        if (!tipo_atual) { 
+            yyerror("Erro: tipo não definido antes dos identificadores."); 
+            YYABORT; 
+        }
+        $$ = malloc(strlen(tipo_atual) + strlen($1) + 10);
+        sprintf($$, "%s %s;\n", tipo_atual, $1);
+    }
     | listaIdentificadores VIRGULA IDENTIFICADOR {
-        char *temp = malloc(strlen($1) + strlen($3) + 3);
-        sprintf(temp, "%s, %s", $1, $3);
+        if (!tipo_atual) { 
+            yyerror("Erro: tipo não definido antes dos identificadores."); 
+            YYABORT; 
+        }
+        char *temp = malloc(strlen($1) + strlen(tipo_atual) + strlen($3) + 10);
+        sprintf(temp, "%s%s %s;", $1, tipo_atual, $3);
         $$ = temp;
     }
     ;
