@@ -63,7 +63,6 @@
 \"[^\"]*\"              { yylval.str = strdup(yytext); printf("Token: STRING, Valor: %s\n", yytext); return STRING; }
 [ \t]                   { /* Ignora espaços e tabs */ }
 "//".*                  { /* Ignora comentários de linha */ }
-.                       { printf("Token desconhecido: %s\n", yytext); return yytext[0]; }
 
 %%
 

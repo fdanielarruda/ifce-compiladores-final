@@ -1,0 +1,32 @@
+// Declaração de variáveis
+var inteiro: sensor, sensorValor;
+var texto: url, payload, ssid, senha;
+
+// Função de setup
+config
+    // Configuração de comunicação
+    configurarSerial 115200;
+
+    url = "http://example.com";
+    payload = "dados=123";
+    ssid = "MinhaRedeWiFi";
+    senha = "MinhaSenhaWiFi";
+    sensor = 36;
+
+    configurar sensor como entrada;
+
+    conectarWifi ssid senha;
+fim
+
+// Loop principal
+repita
+    // Leitura do sensor
+    sensorValor = lerAnalogico sensor;
+    escreverSerial "Valor do sensor: ";
+    escreverSerial sensorValor;
+
+    // Envio de dados HTTP
+    enviarHttp url payload;
+    
+    esperar 2000; // Aguarda 2 segundos antes da próxima leitura
+fim

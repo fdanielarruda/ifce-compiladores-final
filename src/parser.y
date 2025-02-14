@@ -16,7 +16,12 @@ void appendCode(const char *novoCodigo) {
     if (codigoGerado == NULL) {
         codigoGerado = strdup(novoCodigo);
     } else {
-        char *temp = malloc(strlen(codigoGerado) + strlen(novoCodigo) + 1);
+        size_t novoTamanho = strlen(codigoGerado) + strlen(novoCodigo) + 1;
+        char *temp = (char *)malloc(novoTamanho);
+        if (temp == NULL) {
+            fprintf(stderr, "Erro: Falha na alocação de memória\n");
+            exit(1);
+        }
         strcpy(temp, codigoGerado);
         strcat(temp, novoCodigo);
         free(codigoGerado);
@@ -28,7 +33,12 @@ void appendConstantes(const char *novaConstante) {
     if (constantesGlobais == NULL) {
         constantesGlobais = strdup(novaConstante);
     } else {
-        char *temp = malloc(strlen(constantesGlobais) + strlen(novaConstante) + 1);
+        size_t novoTamanho = strlen(constantesGlobais) + strlen(novaConstante) + 1;
+        char *temp = (char *)malloc(novoTamanho);
+        if (temp == NULL) {
+            fprintf(stderr, "Erro: Falha na alocação de memória\n");
+            exit(1);
+        }
         strcpy(temp, constantesGlobais);
         strcat(temp, novaConstante);
         free(constantesGlobais);
@@ -84,7 +94,7 @@ declaracoes:
     /* vazio */ { $$ = strdup(""); }
     | declaracao declaracoes { 
         char *temp = malloc(strlen($1) + strlen($2) + 2);
-        sprintf(temp, "%s\n%s", $1, $2);
+        sprintf(temp, "%s%s", $1, $2);
         $$ = temp;
     }
     ;
@@ -119,16 +129,27 @@ listaIdentificadores:
             yyerror("Erro: tipo não definido antes dos identificadores."); 
             YYABORT; 
         }
-        $$ = malloc(strlen(tipo_atual) + strlen($1) + 10);
-        sprintf($$, "%s %s;\n", tipo_atual, $1);
+        size_t tamanho = strlen(tipo_atual) + strlen($1) + 10;
+        char *codigo = (char *)malloc(tamanho);
+        if (codigo == NULL) {
+            yyerror("Erro: Falha na alocação de memória");
+            YYABORT;
+        }
+        snprintf(codigo, tamanho, "%s %s;\n", tipo_atual, $1);
+        $$ = codigo;
     }
     | listaIdentificadores VIRGULA IDENTIFICADOR {
         if (!tipo_atual) { 
             yyerror("Erro: tipo não definido antes dos identificadores."); 
             YYABORT; 
         }
-        char *temp = malloc(strlen($1) + strlen(tipo_atual) + strlen($3) + 10);
-        sprintf(temp, "%s%s %s;", $1, tipo_atual, $3);
+        size_t tamanho = strlen($1) + strlen(tipo_atual) + strlen($3) + 10;
+        char *temp = (char *)malloc(tamanho);
+        if (temp == NULL) {
+            yyerror("Erro: Falha na alocação de memória");
+            YYABORT;
+        }
+        snprintf(temp, tamanho, "%s%s %s;\n", $1, tipo_atual, $3);
         $$ = temp;
     }
     ;
@@ -172,6 +193,11 @@ atribuicao:
         sprintf(codigo, "%s = digitalRead(%s);\n", $1, $4);
         $$ = codigo;
     }
+    | IDENTIFICADOR IGUAL LER_ANALOGICO IDENTIFICADOR PONTOEVIRGULA {
+        char *codigo = malloc(strlen($1) + strlen($4) + 30);
+        sprintf(codigo, "%s = analogRead(%s);\n", $1, $4);
+        $$ = codigo;
+    }
     ;
 
 expressao:
@@ -191,7 +217,6 @@ expressao:
         $$ = malloc(strlen($1) + strlen($3) + 4);
         sprintf($$, "%s / %s", $1, $3);
     }
-    /* Add new comparison operators */
     | expressao IGUAL_IGUAL expressao {
         $$ = malloc(strlen($1) + strlen($3) + 4);
         sprintf($$, "%s == %s", $1, $3);
@@ -318,7 +343,7 @@ operacaoHardware:
         sprintf(codigo, "delay(%d);\n", $2);
         $$ = codigo;
     }
-    | ESCREVER_SERIAL STRING PONTOEVIRGULA {
+    | ESCREVER_SERIAL expressao PONTOEVIRGULA {
         char *codigo = malloc(strlen($2) + 30);
         sprintf(codigo, "Serial.println(%s);\n", $2);
         $$ = codigo;
@@ -328,9 +353,9 @@ operacaoHardware:
         sprintf(codigo, "%s = Serial.readString();\n", $2);
         $$ = codigo;
     }
-    | ENVIAR_HTTP STRING PONTOEVIRGULA {
-        char *codigo = malloc(strlen($2) + 50);
-        sprintf(codigo, "http.begin(%s);\nhttp.GET();\n", $2);
+    | ENVIAR_HTTP expressao expressao PONTOEVIRGULA {
+        char *codigo = malloc(strlen($2) + strlen($3) + 500);
+        sprintf(codigo, "if (WiFi.status() == WL_CONNECTED)\n{\n    http.begin(%s);\n    int httpResponseCode = http.GET();\n    if (httpResponseCode > 0) {\n        Serial.print(\"Resposta HTTP: \");\n        Serial.println(httpResponseCode);\n    } else {\n        Serial.print(\"Erro na requisição: \");\n        Serial.println(httpResponseCode);\n    }\n    http.end();\n} else {\n    Serial.println(\"WiFi desconectado, tentando reconectar...\");\n    WiFi.begin(%s, %s);\n}\n", $2, $2, $3);
         $$ = codigo;
     }
     | LER_DIGITAL IDENTIFICADOR PONTOEVIRGULA {
@@ -358,7 +383,6 @@ loop:
 void yyerror(const char *msg) {
     extern int yylineno;
     extern char *yytext;
-
     fprintf(stderr, "Erro de sintaxe na linha %d: %s\n", yylineno, msg);
     fprintf(stderr, "Token inesperado: '%s'\n", yytext);
 }

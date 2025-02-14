@@ -352,8 +352,8 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 54
-#define YY_END_OF_BUFFER 55
+#define YY_NUM_RULES 53
+#define YY_END_OF_BUFFER 54
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -363,7 +363,7 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[211] =
     {   0,
-        0,    0,   55,   53,   51,   47,   53,   53,   43,   41,
+        0,    0,   54,   53,   51,   47,   53,   53,   43,   41,
        39,   44,   40,   42,   48,   46,   45,   35,   32,   36,
        49,   49,   49,   49,   49,   49,   49,   49,   49,   49,
        49,   49,   49,   34,    0,   50,   52,   48,   37,   33,
@@ -1112,15 +1112,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 66 "src/lexer.l"
-{ printf("Token desconhecido: %s\n", yytext); return yytext[0]; }
-	YY_BREAK
-case 54:
-YY_RULE_SETUP
-#line 68 "src/lexer.l"
+#line 67 "src/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1124 "temp/lex.yy.c"
+#line 1119 "temp/lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2125,7 +2120,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 68 "src/lexer.l"
+#line 67 "src/lexer.l"
 
 
 int yywrap() {
