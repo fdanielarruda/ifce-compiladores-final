@@ -52,12 +52,14 @@ void appendConstantes(const char *novaConstante) {
 %token CONFIG CONFIGURAR CONFIGURARPWM CONFIGURARSERIAL CONECTARWIFI
 %token LIGAR DESLIGAR AJUSTARPWM ESPERAR ESCREVER_SERIAL LER_SERIAL ENVIAR_HTTP LER_DIGITAL LER_ANALOGICO
 %token SE SENAO ENTAO ENQUANTO REPITA FIM
-%token COM COMO SAIDA FREQUENCIA RESOLUCAO
+%token COM COMO SAIDA ENTRADA FREQUENCIA RESOLUCAO
 %token IGUAL IGUAL_IGUAL DIFERENTE MENOR MAIOR MENOR_IGUAL MAIOR_IGUAL 
 %token MAIS MENOS MULTIPLICACAO DIVISAO MODULO VIRGULA PONTOEVIRGULA DOISPONTOS
 %token VALOR
 
 /* Declaração de precedência e associatividade */
+%left IGUAL_IGUAL DIFERENTE
+%left MENOR MAIOR MENOR_IGUAL MAIOR_IGUAL
 %left MAIS MENOS
 %left MULTIPLICACAO DIVISAO MODULO
 %right IGUAL
@@ -65,7 +67,7 @@ void appendConstantes(const char *novaConstante) {
 /* Declaração de não terminais */
 %type <str> programa declaracoes declaracao configuracao loop comandos comando atribuicao
 %type <str> tipo listaIdentificadores
-%type <str> configuracaoPino configuracaoPWM conexaoWifi controleFluxo
+%type <str> configuracaoPino configuracaoPWM configuracaoSerial conexaoWifi controleFluxo
 %type <str> condicional repeticao operacaoHardware expressao
 
 %%
@@ -153,6 +155,7 @@ comando:
     atribuicao
     | configuracaoPino
     | configuracaoPWM
+    | configuracaoSerial
     | conexaoWifi
     | controleFluxo
     | operacaoHardware
@@ -164,6 +167,11 @@ atribuicao:
         sprintf(codigo, "%s = %s;\n", $1, $3);
         $$ = codigo;
     }
+    | IDENTIFICADOR IGUAL LER_DIGITAL IDENTIFICADOR PONTOEVIRGULA {
+        char *codigo = malloc(strlen($1) + strlen($4) + 30);
+        sprintf(codigo, "%s = digitalRead(%s);\n", $1, $4);
+        $$ = codigo;
+    }
     ;
 
 expressao:
@@ -171,27 +179,47 @@ expressao:
         $$ = malloc(strlen($1) + strlen($3) + 4);
         sprintf($$, "%s + %s", $1, $3);
     }
-    
     | expressao MENOS expressao {
         $$ = malloc(strlen($1) + strlen($3) + 4);
         sprintf($$, "%s - %s", $1, $3);
     }
-    
     | expressao MULTIPLICACAO expressao {
         $$ = malloc(strlen($1) + strlen($3) + 4);
         sprintf($$, "%s * %s", $1, $3);
     }
-    
     | expressao DIVISAO expressao {
         $$ = malloc(strlen($1) + strlen($3) + 4);
         sprintf($$, "%s / %s", $1, $3);
     }
-    
+    /* Add new comparison operators */
+    | expressao IGUAL_IGUAL expressao {
+        $$ = malloc(strlen($1) + strlen($3) + 4);
+        sprintf($$, "%s == %s", $1, $3);
+    }
+    | expressao DIFERENTE expressao {
+        $$ = malloc(strlen($1) + strlen($3) + 4);
+        sprintf($$, "%s != %s", $1, $3);
+    }
+    | expressao MENOR expressao {
+        $$ = malloc(strlen($1) + strlen($3) + 4);
+        sprintf($$, "%s < %s", $1, $3);
+    }
+    | expressao MAIOR expressao {
+        $$ = malloc(strlen($1) + strlen($3) + 4);
+        sprintf($$, "%s > %s", $1, $3);
+    }
+    | expressao MENOR_IGUAL expressao {
+        $$ = malloc(strlen($1) + strlen($3) + 4);
+        sprintf($$, "%s <= %s", $1, $3);
+    }
+    | expressao MAIOR_IGUAL expressao {
+        $$ = malloc(strlen($1) + strlen($3) + 4);
+        sprintf($$, "%s >= %s", $1, $3);
+    }
     | NUMERO {
         $$ = malloc(20);
         sprintf($$, "%d", $1);
     }
-    
     | IDENTIFICADOR {
         $$ = strdup($1);
     }
@@ -206,6 +234,11 @@ configuracaoPino:
         sprintf(codigo, "pinMode(%s, OUTPUT);\n", $2);
         $$ = codigo;
     }
+    | CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTOEVIRGULA {
+        char *codigo = malloc(strlen($2) + 30);
+        sprintf(codigo, "pinMode(%s, INPUT);\n", $2);
+        $$ = codigo;
+    }
     ;
 
 configuracaoPWM:
@@ -215,12 +248,20 @@ configuracaoPWM:
 
         // Gerando as constantes globais
         sprintf(constantes, "\nconst int canalPWM = 0;\nconst int frequencia = %d;\nconst int resolucao = %d;\n", $5, $7);
-        appendConstantes(constantes);  // Armazena como global
+        appendConstantes(constantes);
 
         // Código do setup
         sprintf(codigo, "ledcSetup(canalPWM, frequencia, resolucao);\nledcAttachPin(%s, canalPWM);\n", $2);
         $$ = strdup(codigo);
     }
+
+configuracaoSerial:
+    CONFIGURARSERIAL NUMERO PONTOEVIRGULA {
+        char *codigo = malloc(50);
+        sprintf(codigo, "Serial.begin(%d);\n", $2);
+        $$ = codigo;
+    }
+    ;
 
 conexaoWifi:
     CONECTARWIFI IDENTIFICADOR IDENTIFICADOR PONTOEVIRGULA {
@@ -238,12 +279,12 @@ controleFluxo:
 condicional:
     SE expressao ENTAO comandos SENAO comandos FIM {
         char *codigo = malloc(strlen($2) + strlen($4) + strlen($6) + 50);
-        sprintf(codigo, "if (%s) { %s } else { %s }", $2, $4, $6);
+        sprintf(codigo, "if (%s)\n{\n%s}\nelse\n{\n%s}\n", $2, $4, $6);
         $$ = codigo;
     }
     | SE expressao ENTAO comandos FIM {
         char *codigo = malloc(strlen($2) + strlen($4) + 30);
-        sprintf(codigo, "if (%s) { %s }", $2, $4);
+        sprintf(codigo, "if (%s)\n{\n%s}\n", $2, $4);
         $$ = codigo;
     }
     ;
@@ -251,7 +292,7 @@ condicional:
 repeticao:
     ENQUANTO expressao FIM comandos FIM {
         char *codigo = malloc(strlen($2) + strlen($4) + 30);
-        sprintf(codigo, "while (%s) { %s }", $2, $4);
+        sprintf(codigo, "while (%s)\n{\n%s}\n", $2, $4);
         $$ = codigo;
     }
     ;
@@ -337,16 +378,13 @@ int main(int argc, char **argv) {
     yyparse();
 
     if (codigoGerado) {
-        // Obtém o nome do arquivo de entrada
         char *entrada = argv[1];
-        char *nomeArquivo = strrchr(entrada, '/'); // Obtém apenas o nome do arquivo
+        char *nomeArquivo = strrchr(entrada, '/');
         nomeArquivo = (nomeArquivo) ? nomeArquivo + 1 : entrada;
 
-        // Substitui a extensão por .cpp
         char saida[256];
         snprintf(saida, sizeof(saida), "langs/%s", nomeArquivo);
-        
-        // Substitui a extensão original por .cpp
+
         char *ponto = strrchr(saida, '.');
         if (ponto) {
             strcpy(ponto, ".cpp");
@@ -354,7 +392,6 @@ int main(int argc, char **argv) {
             strcat(saida, ".cpp");
         }
 
-        // Cria o arquivo de saída
         FILE *arquivo = fopen(saida, "w");
         if (arquivo) {
             fprintf(arquivo, "%s", codigoGerado);

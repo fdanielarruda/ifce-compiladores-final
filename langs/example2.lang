@@ -1,5 +1,6 @@
 // Declaração de variáveis
-var inteiro: ledPin, botaoPin, estadoBotao;
+var inteiro: ledPin, botaoPin;
+var booleano: estadoBotao;
 
 // Função de setup
 config
@@ -14,13 +15,13 @@ fim
 
 // Loop principal
 repita
-    estadoBotao = lerBotao(botaoPin); // Lê o estado do botão (0 ou 1)
+    estadoBotao = lerDigital botaoPin;
     
-    se estadoBotao == 1 então
-        acionar ledPin; // Aciona o LED
+    se estadoBotao == 1 entao
+        ligar ledPin; // Aciona o LED
     senao
         desligar ledPin; // Desliga o LED
     fim
 
-    esperar 100; // Aguarda um curto período para evitar leitura contínua
+    esperar 1000; // Aguarda um curto período para evitar leitura contínua
 fim

@@ -35,6 +35,7 @@
 "com"                   { printf("Token: COM, Valor: %s\n", yytext); return COM; }
 "como"                  { printf("Token: COMO, Valor: %s\n", yytext); return COMO; }
 "saida"                 { printf("Token: SAIDA, Valor: %s\n", yytext); return SAIDA; }
+"entrada"               { printf("Token: ENTRADA, Valor: %s\n", yytext); return ENTRADA; }
 "frequencia"            { printf("Token: FREQUENCIA, Valor: %s\n", yytext); return FREQUENCIA; }
 "resolucao"             { printf("Token: RESOLUCAO, Valor: %s\n", yytext); return RESOLUCAO; }
 "valor"                 { printf("Token: VALOR, Valor: %s\n", yytext); return VALOR; }

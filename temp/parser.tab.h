@@ -84,24 +84,25 @@ extern int yydebug;
     COM = 285,                     /* COM  */
     COMO = 286,                    /* COMO  */
     SAIDA = 287,                   /* SAIDA  */
-    FREQUENCIA = 288,              /* FREQUENCIA  */
-    RESOLUCAO = 289,               /* RESOLUCAO  */
-    IGUAL = 290,                   /* IGUAL  */
-    IGUAL_IGUAL = 291,             /* IGUAL_IGUAL  */
-    DIFERENTE = 292,               /* DIFERENTE  */
-    MENOR = 293,                   /* MENOR  */
-    MAIOR = 294,                   /* MAIOR  */
-    MENOR_IGUAL = 295,             /* MENOR_IGUAL  */
-    MAIOR_IGUAL = 296,             /* MAIOR_IGUAL  */
-    MAIS = 297,                    /* MAIS  */
-    MENOS = 298,                   /* MENOS  */
-    MULTIPLICACAO = 299,           /* MULTIPLICACAO  */
-    DIVISAO = 300,                 /* DIVISAO  */
-    MODULO = 301,                  /* MODULO  */
-    VIRGULA = 302,                 /* VIRGULA  */
-    PONTOEVIRGULA = 303,           /* PONTOEVIRGULA  */
-    DOISPONTOS = 304,              /* DOISPONTOS  */
-    VALOR = 305                    /* VALOR  */
+    ENTRADA = 288,                 /* ENTRADA  */
+    FREQUENCIA = 289,              /* FREQUENCIA  */
+    RESOLUCAO = 290,               /* RESOLUCAO  */
+    IGUAL = 291,                   /* IGUAL  */
+    IGUAL_IGUAL = 292,             /* IGUAL_IGUAL  */
+    DIFERENTE = 293,               /* DIFERENTE  */
+    MENOR = 294,                   /* MENOR  */
+    MAIOR = 295,                   /* MAIOR  */
+    MENOR_IGUAL = 296,             /* MENOR_IGUAL  */
+    MAIOR_IGUAL = 297,             /* MAIOR_IGUAL  */
+    MAIS = 298,                    /* MAIS  */
+    MENOS = 299,                   /* MENOS  */
+    MULTIPLICACAO = 300,           /* MULTIPLICACAO  */
+    DIVISAO = 301,                 /* DIVISAO  */
+    MODULO = 302,                  /* MODULO  */
+    VIRGULA = 303,                 /* VIRGULA  */
+    PONTOEVIRGULA = 304,           /* PONTOEVIRGULA  */
+    DOISPONTOS = 305,              /* DOISPONTOS  */
+    VALOR = 306                    /* VALOR  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -116,7 +117,7 @@ union YYSTYPE
     int num;
     char *id;
 
-#line 120 "temp/parser.tab.h"
+#line 121 "temp/parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
