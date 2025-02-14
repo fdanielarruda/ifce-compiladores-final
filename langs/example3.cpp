@@ -3,10 +3,10 @@
 
 int sensor;
 int sensorValor;
+int valor2;
 String url;
 String payload;
 String ssid;
-String senha;
 String senha;
 
 void setup()
@@ -29,6 +29,7 @@ Serial.println("Conectado ao WiFi!");
 
 void loop()
 {
+valor2 = sensor + url;
 sensorValor = analogRead(sensor);
 Serial.println("Valor do sensor: ");
 Serial.println(sensorValor);
