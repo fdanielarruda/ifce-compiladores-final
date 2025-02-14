@@ -317,7 +317,7 @@ void liberarPinosSaida() {
 programa:
     declaracoes configuracao loop {
         char *temp = malloc(strlen($1) + (constantesGlobais ? strlen(constantesGlobais) : 0) + strlen($2) + strlen($3) + 100);
-        sprintf(temp, "#include <Arduino.h>\n#include <WiFi.h>\n\n%s%s%s%s", $1, constantesGlobais ? constantesGlobais : "", $2, $3);
+        sprintf(temp, "#include <Arduino.h>\n#include <WiFi.h>\n#include <HTTPClient.h>\n\n%s%s%s%s", $1, constantesGlobais ? constantesGlobais : "", $2, $3);
         appendCode(temp);
         $$ = temp;
     }
