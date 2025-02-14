@@ -79,7 +79,7 @@ int yylex();
 extern FILE *yyin;
 
 char *codigoGerado = NULL;
-char *tipo_atual = NULL;
+char *tipoAtual = NULL;
 char *constantesGlobais = NULL;
 
 void appendCode(const char *novoCodigo) {
@@ -1321,9 +1321,9 @@ yyreduce:
   case 6: /* tipo: INTEIRO  */
 #line 109 "src/parser.y"
             { 
-        if (tipo_atual) free(tipo_atual);
-        tipo_atual = strdup("int"); 
-        (yyval.str) = tipo_atual; 
+        if (tipoAtual) free(tipoAtual);
+        tipoAtual = strdup("int"); 
+        (yyval.str) = tipoAtual; 
     }
 #line 1329 "temp/parser.tab.c"
     break;
@@ -1331,9 +1331,9 @@ yyreduce:
   case 7: /* tipo: TEXTO  */
 #line 114 "src/parser.y"
             { 
-        if (tipo_atual) free(tipo_atual);
-        tipo_atual = strdup("String"); 
-        (yyval.str) = tipo_atual; 
+        if (tipoAtual) free(tipoAtual);
+        tipoAtual = strdup("String"); 
+        (yyval.str) = tipoAtual; 
     }
 #line 1339 "temp/parser.tab.c"
     break;
@@ -1341,9 +1341,9 @@ yyreduce:
   case 8: /* tipo: BOOLEANO  */
 #line 119 "src/parser.y"
                { 
-        if (tipo_atual) free(tipo_atual);
-        tipo_atual = strdup("bool"); 
-        (yyval.str) = tipo_atual; 
+        if (tipoAtual) free(tipoAtual);
+        tipoAtual = strdup("bool"); 
+        (yyval.str) = tipoAtual; 
     }
 #line 1349 "temp/parser.tab.c"
     break;
@@ -1351,17 +1351,17 @@ yyreduce:
   case 9: /* listaIdentificadores: IDENTIFICADOR  */
 #line 127 "src/parser.y"
                   { 
-        if (!tipo_atual) { 
+        if (!tipoAtual) { 
             yyerror("Erro: tipo não definido antes dos identificadores."); 
             YYABORT; 
         }
-        size_t tamanho = strlen(tipo_atual) + strlen((yyvsp[0].str)) + 10;
+        size_t tamanho = strlen(tipoAtual) + strlen((yyvsp[0].str)) + 10;
         char *codigo = (char *)malloc(tamanho);
         if (codigo == NULL) {
             yyerror("Erro: Falha na alocação de memória");
             YYABORT;
         }
-        snprintf(codigo, tamanho, "%s %s;\n", tipo_atual, (yyvsp[0].str));
+        snprintf(codigo, tamanho, "%s %s;\n", tipoAtual, (yyvsp[0].str));
         (yyval.str) = codigo;
     }
 #line 1368 "temp/parser.tab.c"
@@ -1370,17 +1370,17 @@ yyreduce:
   case 10: /* listaIdentificadores: listaIdentificadores VIRGULA IDENTIFICADOR  */
 #line 141 "src/parser.y"
                                                  {
-        if (!tipo_atual) { 
+        if (!tipoAtual) { 
             yyerror("Erro: tipo não definido antes dos identificadores."); 
             YYABORT; 
         }
-        size_t tamanho = strlen((yyvsp[-2].str)) + strlen(tipo_atual) + strlen((yyvsp[0].str)) + 10;
+        size_t tamanho = strlen((yyvsp[-2].str)) + strlen(tipoAtual) + strlen((yyvsp[0].str)) + 10;
         char *temp = (char *)malloc(tamanho);
         if (temp == NULL) {
             yyerror("Erro: Falha na alocação de memória");
             YYABORT;
         }
-        snprintf(temp, tamanho, "%s%s %s;\n", (yyvsp[-2].str), tipo_atual, (yyvsp[0].str));
+        snprintf(temp, tamanho, "%s%s %s;\n", (yyvsp[-2].str), tipoAtual, (yyvsp[0].str));
         (yyval.str) = temp;
     }
 #line 1387 "temp/parser.tab.c"

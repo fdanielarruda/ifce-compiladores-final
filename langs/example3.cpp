@@ -7,6 +7,7 @@ String url;
 String payload;
 String ssid;
 String senha;
+String senha;
 
 void setup()
 {

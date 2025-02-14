@@ -9,7 +9,7 @@ int yylex();
 extern FILE *yyin;
 
 char *codigoGerado = NULL;
-char *tipo_atual = NULL;
+char *tipoAtual = NULL;
 char *constantesGlobais = NULL;
 
 void appendCode(const char *novoCodigo) {
@@ -107,49 +107,49 @@ declaracao:
 
 tipo:
     INTEIRO { 
-        if (tipo_atual) free(tipo_atual);
-        tipo_atual = strdup("int"); 
-        $$ = tipo_atual; 
+        if (tipoAtual) free(tipoAtual);
+        tipoAtual = strdup("int"); 
+        $$ = tipoAtual; 
     }
     | TEXTO { 
-        if (tipo_atual) free(tipo_atual);
-        tipo_atual = strdup("String"); 
-        $$ = tipo_atual; 
+        if (tipoAtual) free(tipoAtual);
+        tipoAtual = strdup("String"); 
+        $$ = tipoAtual; 
     }
     | BOOLEANO { 
-        if (tipo_atual) free(tipo_atual);
-        tipo_atual = strdup("bool"); 
-        $$ = tipo_atual; 
+        if (tipoAtual) free(tipoAtual);
+        tipoAtual = strdup("bool"); 
+        $$ = tipoAtual; 
     }
     ;
 
 listaIdentificadores:
     IDENTIFICADOR { 
-        if (!tipo_atual) { 
+        if (!tipoAtual) { 
             yyerror("Erro: tipo não definido antes dos identificadores."); 
             YYABORT; 
         }
-        size_t tamanho = strlen(tipo_atual) + strlen($1) + 10;
+        size_t tamanho = strlen(tipoAtual) + strlen($1) + 10;
         char *codigo = (char *)malloc(tamanho);
         if (codigo == NULL) {
             yyerror("Erro: Falha na alocação de memória");
             YYABORT;
         }
-        snprintf(codigo, tamanho, "%s %s;\n", tipo_atual, $1);
+        snprintf(codigo, tamanho, "%s %s;\n", tipoAtual, $1);
         $$ = codigo;
     }
     | listaIdentificadores VIRGULA IDENTIFICADOR {
-        if (!tipo_atual) { 
+        if (!tipoAtual) { 
             yyerror("Erro: tipo não definido antes dos identificadores."); 
             YYABORT; 
         }
-        size_t tamanho = strlen($1) + strlen(tipo_atual) + strlen($3) + 10;
+        size_t tamanho = strlen($1) + strlen(tipoAtual) + strlen($3) + 10;
         char *temp = (char *)malloc(tamanho);
         if (temp == NULL) {
             yyerror("Erro: Falha na alocação de memória");
             YYABORT;
         }
-        snprintf(temp, tamanho, "%s%s %s;\n", $1, tipo_atual, $3);
+        snprintf(temp, tamanho, "%s%s %s;\n", $1, tipoAtual, $3);
         $$ = temp;
     }
     ;
