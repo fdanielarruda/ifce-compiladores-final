@@ -29,6 +29,22 @@ struct PinoPWM {
 
 struct PinoPWM *pinosPWM = NULL;
 
+struct PinoEntrada {
+    char *nome;
+    int configurado;
+    struct PinoEntrada *prox;
+};
+
+struct PinoEntrada *pinosEntrada = NULL;
+
+struct PinoSaida {
+    char *nome;
+    int configurado;
+    struct PinoSaida *prox;
+};
+
+struct PinoSaida *pinosSaida = NULL;
+
 int variavelJaDeclarada(const char *nome) {
     struct VariavelDeclarada *atual = variaveis;
     while (atual != NULL) {
@@ -199,6 +215,66 @@ void liberarPinosPWM() {
         free(temp);
     }
     pinosPWM = NULL;
+}
+
+void adicionarPinoEntrada(const char *nome) {
+    struct PinoEntrada *novo = malloc(sizeof(struct PinoEntrada));
+    novo->nome = strdup(nome);
+    novo->configurado = 1;
+    novo->prox = pinosEntrada;
+    pinosEntrada = novo;
+}
+
+int pinoEntradaConfigurado(const char *nome) {
+    struct PinoEntrada *atual = pinosEntrada;
+    while (atual != NULL) {
+        if (strcmp(atual->nome, nome) == 0) {
+            return atual->configurado;
+        }
+        atual = atual->prox;
+    }
+    return 0;
+}
+
+void liberarPinosEntrada() {
+    struct PinoEntrada *atual = pinosEntrada;
+    while (atual != NULL) {
+        struct PinoEntrada *temp = atual;
+        atual = atual->prox;
+        free(temp->nome);
+        free(temp);
+    }
+    pinosEntrada = NULL;
+}
+
+void adicionarPinoSaida(const char *nome) {
+    struct PinoSaida *novo = malloc(sizeof(struct PinoSaida));
+    novo->nome = strdup(nome);
+    novo->configurado = 1;
+    novo->prox = pinosSaida;
+    pinosSaida = novo;
+}
+
+int pinoSaidaConfigurado(const char *nome) {
+    struct PinoSaida *atual = pinosSaida;
+    while (atual != NULL) {
+        if (strcmp(atual->nome, nome) == 0) {
+            return atual->configurado;
+        }
+        atual = atual->prox;
+    }
+    return 0;
+}
+
+void liberarPinosSaida() {
+    struct PinoSaida *atual = pinosSaida;
+    while (atual != NULL) {
+        struct PinoSaida *temp = atual;
+        atual = atual->prox;
+        free(temp->nome);
+        free(temp);
+    }
+    pinosSaida = NULL;
 }
 
 %}
@@ -377,6 +453,12 @@ atribuicao:
         if (!verificarVariavelDeclarada($4)) {
             YYABORT;
         }
+        if (!pinoEntradaConfigurado($4)) {
+            char erro[256];
+            snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como entrada", $4);
+            yyerror(erro);
+            YYABORT;
+        }
         char *codigo = malloc(strlen($1) + strlen($4) + 30);
         sprintf(codigo, "%s = digitalRead(%s);\n", $1, $4);
         $$ = codigo;
@@ -386,6 +468,12 @@ atribuicao:
             YYABORT;
         }
         if (!verificarVariavelDeclarada($4)) {
+            YYABORT;
+        }
+        if (!pinoEntradaConfigurado($4)) {
+            char erro[256];
+            snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como entrada", $4);
+            yyerror(erro);
             YYABORT;
         }
         char *codigo = malloc(strlen($1) + strlen($4) + 30);
@@ -467,6 +555,7 @@ configuracaoPino:
         if (!verificarVariavelDeclarada($2)) {
             YYABORT;
         }
+        adicionarPinoSaida($2);
         char *codigo = malloc(strlen($2) + 30);
         sprintf(codigo, "pinMode(%s, OUTPUT);\n", $2);
         $$ = codigo;
@@ -475,6 +564,7 @@ configuracaoPino:
         if (!verificarVariavelDeclarada($2)) {
             YYABORT;
         }
+        adicionarPinoEntrada($2);
         char *codigo = malloc(strlen($2) + 30);
         sprintf(codigo, "pinMode(%s, INPUT);\n", $2);
         $$ = codigo;
@@ -553,12 +643,24 @@ operacaoHardware:
         if (!verificarVariavelDeclarada($2)) {
             YYABORT;
         }
+        if (!pinoSaidaConfigurado($2)) {
+            char erro[256];
+            snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como saída", $2);
+            yyerror(erro);
+            YYABORT;
+        }
         char *codigo = malloc(strlen($2) + 20);
         sprintf(codigo, "digitalWrite(%s, HIGH);\n", $2);
         $$ = codigo;
     }
     | DESLIGAR IDENTIFICADOR PONTOEVIRGULA {
         if (!verificarVariavelDeclarada($2)) {
+            YYABORT;
+        }
+        if (!pinoSaidaConfigurado($2)) {
+            char erro[256];
+            snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como saída", $2);
+            yyerror(erro);
             YYABORT;
         }
         char *codigo = malloc(strlen($2) + 25);
@@ -682,5 +784,7 @@ int main(int argc, char **argv) {
 
     liberarVariaveis();
     liberarPinosPWM();
+    liberarPinosEntrada();
+    liberarPinosSaida();
     return 0;
 }
