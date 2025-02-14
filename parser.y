@@ -10,6 +10,7 @@ extern FILE *yyin;
 
 char *codigoGerado = NULL;
 char *tipo_atual = NULL;
+char *constantesGlobais = NULL;
 
 void appendCode(const char *novoCodigo) {
     if (codigoGerado == NULL) {
@@ -20,6 +21,18 @@ void appendCode(const char *novoCodigo) {
         strcat(temp, novoCodigo);
         free(codigoGerado);
         codigoGerado = temp;
+    }
+}
+
+void appendConstantes(const char *novaConstante) {
+    if (constantesGlobais == NULL) {
+        constantesGlobais = strdup(novaConstante);
+    } else {
+        char *temp = malloc(strlen(constantesGlobais) + strlen(novaConstante) + 1);
+        strcpy(temp, constantesGlobais);
+        strcat(temp, novaConstante);
+        free(constantesGlobais);
+        constantesGlobais = temp;
     }
 }
 %}
@@ -59,12 +72,11 @@ void appendCode(const char *novoCodigo) {
 
 programa:
     declaracoes configuracao loop {
-        char *temp = malloc(strlen($1) + strlen($2) + strlen($3) + 50);
-        sprintf(temp, "#include <Arduino.h>\n#include <WiFi.h>\n\n%s%s%s", $1, $2, $3);
+        char *temp = malloc(strlen($1) + (constantesGlobais ? strlen(constantesGlobais) : 0) + strlen($2) + strlen($3) + 100);
+        sprintf(temp, "#include <Arduino.h>\n#include <WiFi.h>\n\n%s%s%s%s", $1, constantesGlobais ? constantesGlobais : "", $2, $3);
         appendCode(temp);
         $$ = temp;
     }
-    ;
 
 declaracoes:
     /* vazio */ { $$ = strdup(""); }
@@ -198,16 +210,17 @@ configuracaoPino:
 
 configuracaoPWM:
     CONFIGURARPWM IDENTIFICADOR COM FREQUENCIA NUMERO RESOLUCAO NUMERO PONTOEVIRGULA {
-        char *constantes = malloc(200);
-        char *codigo = malloc(strlen($2) + 200);
+        char constantes[200];
+        char codigo[200];
 
-        sprintf(constantes, "const int canalPWM = 0;\nconst int frequencia = %d;\nconst int resolucao = %d;\n", $5, $7);
-    
-        sprintf(codigo, "%sledcSetup(canalPWM, frequencia, resolucao);\nledcAttachPin(%s, canalPWM);\n", constantes, $2);
-        
-        $$ = codigo;
+        // Gerando as constantes globais
+        sprintf(constantes, "\nconst int canalPWM = 0;\nconst int frequencia = %d;\nconst int resolucao = %d;\n", $5, $7);
+        appendConstantes(constantes);  // Armazena como global
+
+        // Código do setup
+        sprintf(codigo, "ledcSetup(canalPWM, frequencia, resolucao);\nledcAttachPin(%s, canalPWM);\n", $2);
+        $$ = strdup(codigo);
     }
-    ;
 
 conexaoWifi:
     CONECTARWIFI IDENTIFICADOR IDENTIFICADOR PONTOEVIRGULA {

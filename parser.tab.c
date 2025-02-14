@@ -80,6 +80,7 @@ extern FILE *yyin;
 
 char *codigoGerado = NULL;
 char *tipo_atual = NULL;
+char *constantesGlobais = NULL;
 
 void appendCode(const char *novoCodigo) {
     if (codigoGerado == NULL) {
@@ -93,7 +94,19 @@ void appendCode(const char *novoCodigo) {
     }
 }
 
-#line 97 "parser.tab.c"
+void appendConstantes(const char *novaConstante) {
+    if (constantesGlobais == NULL) {
+        constantesGlobais = strdup(novaConstante);
+    } else {
+        char *temp = malloc(strlen(constantesGlobais) + strlen(novaConstante) + 1);
+        strcpy(temp, constantesGlobais);
+        strcat(temp, novaConstante);
+        free(constantesGlobais);
+        constantesGlobais = temp;
+    }
+}
+
+#line 110 "parser.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -581,11 +594,11 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    61,    61,    70,    71,    79,    85,    90,    95,   103,
-     111,   123,   131,   132,   141,   142,   143,   144,   145,   146,
-     150,   158,   163,   168,   173,   178,   183,   186,   192,   200,
-     213,   221,   222,   226,   231,   239,   247,   252,   257,   262,
-     267,   272,   277,   282,   287,   295
+       0,    74,    74,    82,    83,    91,    97,   102,   107,   115,
+     123,   135,   143,   144,   153,   154,   155,   156,   157,   158,
+     162,   170,   175,   180,   185,   190,   195,   198,   204,   212,
+     226,   234,   235,   239,   244,   252,   260,   265,   270,   275,
+     280,   285,   290,   295,   300,   308
 };
 #endif
 
@@ -1228,72 +1241,72 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* programa: declaracoes configuracao loop  */
-#line 61 "parser.y"
+#line 74 "parser.y"
                                   {
-        char *temp = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 50);
-        sprintf(temp, "#include <Arduino.h>\n#include <WiFi.h>\n\n%s%s%s", (yyvsp[-2].str), (yyvsp[-1].str), (yyvsp[0].str));
+        char *temp = malloc(strlen((yyvsp[-2].str)) + (constantesGlobais ? strlen(constantesGlobais) : 0) + strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 100);
+        sprintf(temp, "#include <Arduino.h>\n#include <WiFi.h>\n\n%s%s%s%s", (yyvsp[-2].str), constantesGlobais ? constantesGlobais : "", (yyvsp[-1].str), (yyvsp[0].str));
         appendCode(temp);
         (yyval.str) = temp;
     }
-#line 1239 "parser.tab.c"
+#line 1252 "parser.tab.c"
     break;
 
   case 3: /* declaracoes: %empty  */
-#line 70 "parser.y"
+#line 82 "parser.y"
                 { (yyval.str) = strdup(""); }
-#line 1245 "parser.tab.c"
+#line 1258 "parser.tab.c"
     break;
 
   case 4: /* declaracoes: declaracao declaracoes  */
-#line 71 "parser.y"
+#line 83 "parser.y"
                              { 
         char *temp = malloc(strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 2);
         sprintf(temp, "%s\n%s", (yyvsp[-1].str), (yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1255 "parser.tab.c"
+#line 1268 "parser.tab.c"
     break;
 
   case 5: /* declaracao: VAR tipo DOISPONTOS listaIdentificadores PONTOEVIRGULA  */
-#line 79 "parser.y"
+#line 91 "parser.y"
                                                            {
         (yyval.str) = strdup((yyvsp[-1].str));
     }
-#line 1263 "parser.tab.c"
+#line 1276 "parser.tab.c"
     break;
 
   case 6: /* tipo: INTEIRO  */
-#line 85 "parser.y"
+#line 97 "parser.y"
             { 
-        if (tipo_atual) free(tipo_atual); // Evitar vazamento de memória
+        if (tipo_atual) free(tipo_atual);
         tipo_atual = strdup("int"); 
         (yyval.str) = tipo_atual; 
     }
-#line 1273 "parser.tab.c"
+#line 1286 "parser.tab.c"
     break;
 
   case 7: /* tipo: TEXTO  */
-#line 90 "parser.y"
+#line 102 "parser.y"
             { 
         if (tipo_atual) free(tipo_atual);
         tipo_atual = strdup("String"); 
         (yyval.str) = tipo_atual; 
     }
-#line 1283 "parser.tab.c"
+#line 1296 "parser.tab.c"
     break;
 
   case 8: /* tipo: BOOLEANO  */
-#line 95 "parser.y"
+#line 107 "parser.y"
                { 
         if (tipo_atual) free(tipo_atual);
         tipo_atual = strdup("bool"); 
         (yyval.str) = tipo_atual; 
     }
-#line 1293 "parser.tab.c"
+#line 1306 "parser.tab.c"
     break;
 
   case 9: /* listaIdentificadores: IDENTIFICADOR  */
-#line 103 "parser.y"
+#line 115 "parser.y"
                   { 
         if (!tipo_atual) { 
             yyerror("Erro: tipo não definido antes dos identificadores."); 
@@ -1302,11 +1315,11 @@ yyreduce:
         (yyval.str) = malloc(strlen(tipo_atual) + strlen((yyvsp[0].str)) + 10);
         sprintf((yyval.str), "%s %s;\n", tipo_atual, (yyvsp[0].str));
     }
-#line 1306 "parser.tab.c"
+#line 1319 "parser.tab.c"
     break;
 
   case 10: /* listaIdentificadores: listaIdentificadores VIRGULA IDENTIFICADOR  */
-#line 111 "parser.y"
+#line 123 "parser.y"
                                                  {
         if (!tipo_atual) { 
             yyerror("Erro: tipo não definido antes dos identificadores."); 
@@ -1316,286 +1329,288 @@ yyreduce:
         sprintf(temp, "%s%s %s;", (yyvsp[-2].str), tipo_atual, (yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1320 "parser.tab.c"
+#line 1333 "parser.tab.c"
     break;
 
   case 11: /* configuracao: CONFIG comandos FIM  */
-#line 123 "parser.y"
+#line 135 "parser.y"
                         {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 50);
         sprintf(codigo, "\nvoid setup()\n{\n%s}\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1330 "parser.tab.c"
+#line 1343 "parser.tab.c"
     break;
 
   case 12: /* comandos: comando  */
-#line 131 "parser.y"
+#line 143 "parser.y"
             { (yyval.str) = strdup((yyvsp[0].str)); }
-#line 1336 "parser.tab.c"
+#line 1349 "parser.tab.c"
     break;
 
   case 13: /* comandos: comandos comando  */
-#line 132 "parser.y"
+#line 144 "parser.y"
                        {
         char *temp = malloc(strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 1);
         strcpy(temp, (yyvsp[-1].str));
         strcat(temp, (yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1347 "parser.tab.c"
+#line 1360 "parser.tab.c"
     break;
 
   case 20: /* atribuicao: IDENTIFICADOR IGUAL expressao PONTOEVIRGULA  */
-#line 150 "parser.y"
+#line 162 "parser.y"
                                                 {
         char *codigo = malloc(strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 10);
         sprintf(codigo, "%s = %s;\n", (yyvsp[-3].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1357 "parser.tab.c"
+#line 1370 "parser.tab.c"
     break;
 
   case 21: /* expressao: expressao MAIS expressao  */
-#line 158 "parser.y"
+#line 170 "parser.y"
                              {
         (yyval.str) = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 4);
         sprintf((yyval.str), "%s + %s", (yyvsp[-2].str), (yyvsp[0].str));
     }
-#line 1366 "parser.tab.c"
+#line 1379 "parser.tab.c"
     break;
 
   case 22: /* expressao: expressao MENOS expressao  */
-#line 163 "parser.y"
+#line 175 "parser.y"
                                 {
         (yyval.str) = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 4);
         sprintf((yyval.str), "%s - %s", (yyvsp[-2].str), (yyvsp[0].str));
     }
-#line 1375 "parser.tab.c"
+#line 1388 "parser.tab.c"
     break;
 
   case 23: /* expressao: expressao MULTIPLICACAO expressao  */
-#line 168 "parser.y"
+#line 180 "parser.y"
                                         {
         (yyval.str) = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 4);
         sprintf((yyval.str), "%s * %s", (yyvsp[-2].str), (yyvsp[0].str));
     }
-#line 1384 "parser.tab.c"
+#line 1397 "parser.tab.c"
     break;
 
   case 24: /* expressao: expressao DIVISAO expressao  */
-#line 173 "parser.y"
+#line 185 "parser.y"
                                   {
         (yyval.str) = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 4);
         sprintf((yyval.str), "%s / %s", (yyvsp[-2].str), (yyvsp[0].str));
     }
-#line 1393 "parser.tab.c"
+#line 1406 "parser.tab.c"
     break;
 
   case 25: /* expressao: NUMERO  */
-#line 178 "parser.y"
+#line 190 "parser.y"
              {
         (yyval.str) = malloc(20);
         sprintf((yyval.str), "%d", (yyvsp[0].num));
     }
-#line 1402 "parser.tab.c"
+#line 1415 "parser.tab.c"
     break;
 
   case 26: /* expressao: IDENTIFICADOR  */
-#line 183 "parser.y"
+#line 195 "parser.y"
                     {
         (yyval.str) = strdup((yyvsp[0].str));
     }
-#line 1410 "parser.tab.c"
+#line 1423 "parser.tab.c"
     break;
 
   case 27: /* expressao: STRING  */
-#line 186 "parser.y"
+#line 198 "parser.y"
              {
         (yyval.str) = strdup((yyvsp[0].str));
     }
-#line 1418 "parser.tab.c"
+#line 1431 "parser.tab.c"
     break;
 
   case 28: /* configuracaoPino: CONFIGURAR IDENTIFICADOR COMO SAIDA PONTOEVIRGULA  */
-#line 192 "parser.y"
+#line 204 "parser.y"
                                                       {
         char *codigo = malloc(strlen((yyvsp[-3].str)) + 30);
         sprintf(codigo, "pinMode(%s, OUTPUT);\n", (yyvsp[-3].str));
         (yyval.str) = codigo;
     }
-#line 1428 "parser.tab.c"
+#line 1441 "parser.tab.c"
     break;
 
   case 29: /* configuracaoPWM: CONFIGURARPWM IDENTIFICADOR COM FREQUENCIA NUMERO RESOLUCAO NUMERO PONTOEVIRGULA  */
-#line 200 "parser.y"
+#line 212 "parser.y"
                                                                                      {
-        char *constantes = malloc(200);
-        char *codigo = malloc(strlen((yyvsp[-6].str)) + 200);
+        char constantes[200];
+        char codigo[200];
 
-        sprintf(constantes, "const int canalPWM = 0;\nconst int frequencia = %d;\nconst int resolucao = %d;\n", (yyvsp[-3].num), (yyvsp[-1].num));
-    
-        sprintf(codigo, "%sledcSetup(canalPWM, frequencia, resolucao);\nledcAttachPin(%s, canalPWM);\n", constantes, (yyvsp[-6].str));
-        
-        (yyval.str) = codigo;
+        // Gerando as constantes globais
+        sprintf(constantes, "\nconst int canalPWM = 0;\nconst int frequencia = %d;\nconst int resolucao = %d;\n", (yyvsp[-3].num), (yyvsp[-1].num));
+        appendConstantes(constantes);  // Armazena como global
+
+        // Código do setup
+        sprintf(codigo, "ledcSetup(canalPWM, frequencia, resolucao);\nledcAttachPin(%s, canalPWM);\n", (yyvsp[-6].str));
+        (yyval.str) = strdup(codigo);
     }
-#line 1443 "parser.tab.c"
+#line 1458 "parser.tab.c"
     break;
 
   case 30: /* conexaoWifi: CONECTARWIFI IDENTIFICADOR IDENTIFICADOR PONTOEVIRGULA  */
-#line 213 "parser.y"
+#line 226 "parser.y"
                                                            {
         char *codigo = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[-1].str)) + 170);
         sprintf(codigo, "WiFi.begin(%s.c_str(), %s.c_str());\nwhile (WiFi.status() != WL_CONNECTED)\n{\n    delay(500);\n    Serial.println(\"Conectando ao WiFi...\");\n}\nSerial.println(\"Conectado ao WiFi!\");\n", (yyvsp[-2].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1453 "parser.tab.c"
+#line 1468 "parser.tab.c"
     break;
 
   case 31: /* controleFluxo: condicional  */
-#line 221 "parser.y"
+#line 234 "parser.y"
                 { (yyval.str) = (yyvsp[0].str); }
-#line 1459 "parser.tab.c"
+#line 1474 "parser.tab.c"
     break;
 
   case 32: /* controleFluxo: repeticao  */
-#line 222 "parser.y"
+#line 235 "parser.y"
                 { (yyval.str) = (yyvsp[0].str); }
-#line 1465 "parser.tab.c"
+#line 1480 "parser.tab.c"
     break;
 
   case 33: /* condicional: SE expressao ENTAO comandos SENAO comandos FIM  */
-#line 226 "parser.y"
+#line 239 "parser.y"
                                                    {
         char *codigo = malloc(strlen((yyvsp[-5].str)) + strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 50);
         sprintf(codigo, "if (%s) { %s } else { %s }", (yyvsp[-5].str), (yyvsp[-3].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1475 "parser.tab.c"
+#line 1490 "parser.tab.c"
     break;
 
   case 34: /* condicional: SE expressao ENTAO comandos FIM  */
-#line 231 "parser.y"
+#line 244 "parser.y"
                                       {
         char *codigo = malloc(strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 30);
         sprintf(codigo, "if (%s) { %s }", (yyvsp[-3].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1485 "parser.tab.c"
+#line 1500 "parser.tab.c"
     break;
 
   case 35: /* repeticao: ENQUANTO expressao FIM comandos FIM  */
-#line 239 "parser.y"
+#line 252 "parser.y"
                                         {
         char *codigo = malloc(strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 30);
         sprintf(codigo, "while (%s) { %s }", (yyvsp[-3].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1495 "parser.tab.c"
+#line 1510 "parser.tab.c"
     break;
 
   case 36: /* operacaoHardware: LIGAR IDENTIFICADOR PONTOEVIRGULA  */
-#line 247 "parser.y"
+#line 260 "parser.y"
                                       {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 20);
         sprintf(codigo, "digitalWrite(%s, HIGH);\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1505 "parser.tab.c"
+#line 1520 "parser.tab.c"
     break;
 
   case 37: /* operacaoHardware: DESLIGAR IDENTIFICADOR PONTOEVIRGULA  */
-#line 252 "parser.y"
+#line 265 "parser.y"
                                            {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 25);
         sprintf(codigo, "digitalWrite(%s, LOW);\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1515 "parser.tab.c"
+#line 1530 "parser.tab.c"
     break;
 
   case 38: /* operacaoHardware: AJUSTARPWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTOEVIRGULA  */
-#line 257 "parser.y"
+#line 270 "parser.y"
                                                                      {
         char *codigo = malloc(strlen((yyvsp[-4].str)) + strlen((yyvsp[-1].str)) + 40);
         sprintf(codigo, "ledcWrite(%s, %s);\n", (yyvsp[-4].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1525 "parser.tab.c"
+#line 1540 "parser.tab.c"
     break;
 
   case 39: /* operacaoHardware: ESPERAR NUMERO PONTOEVIRGULA  */
-#line 262 "parser.y"
+#line 275 "parser.y"
                                    {
         char *codigo = malloc(20);
         sprintf(codigo, "delay(%d);\n", (yyvsp[-1].num));
         (yyval.str) = codigo;
     }
-#line 1535 "parser.tab.c"
+#line 1550 "parser.tab.c"
     break;
 
   case 40: /* operacaoHardware: ESCREVER_SERIAL STRING PONTOEVIRGULA  */
-#line 267 "parser.y"
+#line 280 "parser.y"
                                            {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
         sprintf(codigo, "Serial.println(%s);\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1545 "parser.tab.c"
+#line 1560 "parser.tab.c"
     break;
 
   case 41: /* operacaoHardware: LER_SERIAL IDENTIFICADOR PONTOEVIRGULA  */
-#line 272 "parser.y"
+#line 285 "parser.y"
                                              {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
         sprintf(codigo, "%s = Serial.readString();\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1555 "parser.tab.c"
+#line 1570 "parser.tab.c"
     break;
 
   case 42: /* operacaoHardware: ENVIAR_HTTP STRING PONTOEVIRGULA  */
-#line 277 "parser.y"
+#line 290 "parser.y"
                                        {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 50);
         sprintf(codigo, "http.begin(%s);\nhttp.GET();\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1565 "parser.tab.c"
+#line 1580 "parser.tab.c"
     break;
 
   case 43: /* operacaoHardware: LER_DIGITAL IDENTIFICADOR PONTOEVIRGULA  */
-#line 282 "parser.y"
+#line 295 "parser.y"
                                               {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
         sprintf(codigo, "%s = digitalRead(%s);\n", (yyvsp[-1].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1575 "parser.tab.c"
+#line 1590 "parser.tab.c"
     break;
 
   case 44: /* operacaoHardware: LER_ANALOGICO IDENTIFICADOR PONTOEVIRGULA  */
-#line 287 "parser.y"
+#line 300 "parser.y"
                                                 {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
         sprintf(codigo, "%s = analogRead(%s);\n", (yyvsp[-1].str), (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1585 "parser.tab.c"
+#line 1600 "parser.tab.c"
     break;
 
   case 45: /* loop: REPITA comandos FIM  */
-#line 295 "parser.y"
+#line 308 "parser.y"
                         {
         char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
         sprintf(codigo, "\nvoid loop()\n{\n%s}\n", (yyvsp[-1].str));
         (yyval.str) = codigo;
     }
-#line 1595 "parser.tab.c"
+#line 1610 "parser.tab.c"
     break;
 
 
-#line 1599 "parser.tab.c"
+#line 1614 "parser.tab.c"
 
       default: break;
     }
@@ -1788,7 +1803,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 302 "parser.y"
+#line 315 "parser.y"
 
 
 void yyerror(const char *msg) {
