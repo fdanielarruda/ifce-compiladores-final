@@ -128,21 +128,19 @@ int verificarTipoParaOperacao(char *var1, char *var2) {
 }
 
 int verificarTipoAtribuicao(char *nomeVar, char *tipoVar, char *valor) {
-    int tipoValor = 0; // 0: não identificado, 1: inteiro, 2: flutuante
+    int tipoValor = 0; // 0: indefinido, 1: inteiro, 2: string
 
     // Verificar se "valor" é um número inteiro
     char *endptr;
     strtol(valor, &endptr, 10);
+
     if (*endptr == '\0') {
-        tipoValor = 1;
+        tipoValor = 1; // inteiro
     }
 
-    // Verificar se "valor" é um número flutuante
-    else {
-        strtof(valor, &endptr);
-        if (*endptr == '\0') {
-            tipoValor = 2; // flutuante
-        }
+    // Verificar se "valor" é uma string (começa e termina com aspas)
+    else if (valor[0] == '"' && valor[strlen(valor) - 1] == '"') {
+        tipoValor = 2; // string
     }
 
     // Comparar tipos e gerar mensagem de erro
@@ -153,7 +151,7 @@ int verificarTipoAtribuicao(char *nomeVar, char *tipoVar, char *valor) {
         return 0;
     }
 
-    if (strcmp(tipoVar, "float") == 0 && tipoValor != 2) {
+    if (strcmp(tipoVar, "String") == 0 && tipoValor != 2) {
         char mensagem[256];
         snprintf(mensagem, sizeof(mensagem), "Tipos incompatíveis na atribuição. A variável '%s' deve ser do tipo %s.", nomeVar, tipoVar);
         yyerror(mensagem);
@@ -162,6 +160,7 @@ int verificarTipoAtribuicao(char *nomeVar, char *tipoVar, char *valor) {
 
     return 1;
 }
+
 %}
 
 /* Declaração dos tipos de dados utilizados no %union */
