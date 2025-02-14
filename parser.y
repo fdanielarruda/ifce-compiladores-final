@@ -176,8 +176,13 @@ configuracaoPino:
 
 configuracaoPWM:
     CONFIGURARPWM IDENTIFICADOR COM FREQUENCIA NUMERO RESOLUCAO NUMERO PONTOEVIRGULA {
-        char *codigo = malloc(strlen($2) + 50);
-        sprintf(codigo, "ledcSetup(%s, %d, %d);\n", $2, $5, $7);
+        char *constantes = malloc(200);
+        char *codigo = malloc(strlen($2) + 200);
+
+        sprintf(constantes, "const int canalPWM = 0;\nconst int frequencia = %d;\nconst int resolucao = %d;\n", $5, $7);
+    
+        sprintf(codigo, "%sledcSetup(canalPWM, frequencia, resolucao);\nledcAttachPin(%s, canalPWM);\n", constantes, $2);
+        
         $$ = codigo;
     }
     ;
