@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 void yyerror(const char *s);
 int yylex();
@@ -34,11 +35,22 @@ int variavelJaDeclarada(const char *nome) {
 int verificarVariavelDeclarada(const char *nome) {
     if (!variavelJaDeclarada(nome)) {
         char erro[256];
-        snprintf(erro, sizeof(erro), "Erro: Variável '%s' não foi declarada antes do uso", nome);
+        snprintf(erro, sizeof(erro), "Variável '%s' não foi declarada antes do uso", nome);
         yyerror(erro);
         return 0;
     }
     return 1;
+}
+
+char* obterTipoVariavel(const char *nome) {
+    struct VariavelDeclarada *atual = variaveis;
+    while (atual != NULL) {
+        if (strcmp(atual->nome, nome) == 0) {
+            return atual->tipo;
+        }
+        atual = atual->prox;
+    }
+    return NULL; // Caso a variável não tenha sido declarada
 }
 
 void adicionarVariavel(const char *nome, const char *tipo) {
@@ -68,7 +80,7 @@ void appendCode(const char *novoCodigo) {
         size_t novoTamanho = strlen(codigoGerado) + strlen(novoCodigo) + 1;
         char *temp = (char *)malloc(novoTamanho);
         if (temp == NULL) {
-            fprintf(stderr, "Erro: Falha na alocação de memória\n");
+            fprintf(stderr, "Falha na alocação de memória\n");
             exit(1);
         }
         strcpy(temp, codigoGerado);
@@ -85,7 +97,7 @@ void appendConstantes(const char *novaConstante) {
         size_t novoTamanho = strlen(constantesGlobais) + strlen(novaConstante) + 1;
         char *temp = (char *)malloc(novoTamanho);
         if (temp == NULL) {
-            fprintf(stderr, "Erro: Falha na alocação de memória\n");
+            fprintf(stderr, "Falha na alocação de memória\n");
             exit(1);
         }
         strcpy(temp, constantesGlobais);
@@ -105,13 +117,49 @@ int verificarTipoParaOperacao(char *var1, char *var2) {
         v2 = v2->prox;
     }
     if (v1 == NULL || v2 == NULL) {
-        yyerror("Erro: Variáveis não declaradas");
+        yyerror("Variáveis não declaradas");
         return 0;
     }
     if (strcmp(v1->tipo, "int") != 0 || strcmp(v2->tipo, "int") != 0) {
-        yyerror("Erro: Operações aritméticas permitidas apenas para variáveis inteiras");
+        yyerror("Operações aritméticas permitidas apenas para variáveis inteiras");
         return 0;
     }
+    return 1;
+}
+
+int verificarTipoAtribuicao(char *nomeVar, char *tipoVar, char *valor) {
+    int tipoValor = 0; // 0: não identificado, 1: inteiro, 2: flutuante
+
+    // Verificar se "valor" é um número inteiro
+    char *endptr;
+    strtol(valor, &endptr, 10);
+    if (*endptr == '\0') {
+        tipoValor = 1;
+    }
+
+    // Verificar se "valor" é um número flutuante
+    else {
+        strtof(valor, &endptr);
+        if (*endptr == '\0') {
+            tipoValor = 2; // flutuante
+        }
+    }
+
+    // Comparar tipos e gerar mensagem de erro
+    if (strcmp(tipoVar, "int") == 0 && tipoValor != 1) {
+        char mensagem[256];
+        snprintf(mensagem, sizeof(mensagem), "Tipos incompatíveis na atribuição. A variável '%s' deve ser do tipo %s.", nomeVar, tipoVar);
+        yyerror(mensagem);
+        return 0;
+    }
+
+    if (strcmp(tipoVar, "float") == 0 && tipoValor != 2) {
+        char mensagem[256];
+        snprintf(mensagem, sizeof(mensagem), "Tipos incompatíveis na atribuição. A variável '%s' deve ser do tipo %s.", nomeVar, tipoVar);
+        yyerror(mensagem);
+        return 0;
+    }
+
     return 1;
 }
 %}
@@ -195,12 +243,12 @@ tipo:
 listaIdentificadores:
     IDENTIFICADOR { 
         if (!tipoAtual) { 
-            yyerror("Erro: tipo não definido antes dos identificadores."); 
+            yyerror("tipo não definido antes dos identificadores."); 
             YYABORT; 
         }
         if (variavelJaDeclarada($1)) {
             char erro[256];
-            snprintf(erro, sizeof(erro), "Erro: Variável '%s' já foi declarada", $1);
+            snprintf(erro, sizeof(erro), "Variável '%s' já foi declarada", $1);
             yyerror(erro);
             YYABORT;
         }
@@ -208,7 +256,7 @@ listaIdentificadores:
         size_t tamanho = strlen(tipoAtual) + strlen($1) + 10;
         char *codigo = (char *)malloc(tamanho);
         if (codigo == NULL) {
-            yyerror("Erro: Falha na alocação de memória");
+            yyerror("Falha na alocação de memória");
             YYABORT;
         }
         snprintf(codigo, tamanho, "%s %s;\n", tipoAtual, $1);
@@ -216,12 +264,12 @@ listaIdentificadores:
     }
     | listaIdentificadores VIRGULA IDENTIFICADOR {
         if (!tipoAtual) { 
-            yyerror("Erro: tipo não definido antes dos identificadores."); 
+            yyerror("tipo não definido antes dos identificadores."); 
             YYABORT; 
         }
         if (variavelJaDeclarada($3)) {
             char erro[256];
-            snprintf(erro, sizeof(erro), "Erro: Variável '%s' já foi declarada", $3);
+            snprintf(erro, sizeof(erro), "Variável '%s' já foi declarada", $3);
             yyerror(erro);
             YYABORT;
         }
@@ -229,7 +277,7 @@ listaIdentificadores:
         size_t tamanho = strlen($1) + strlen(tipoAtual) + strlen($3) + 10;
         char *temp = (char *)malloc(tamanho);
         if (temp == NULL) {
-            yyerror("Erro: Falha na alocação de memória");
+            yyerror("Falha na alocação de memória");
             YYABORT;
         }
         snprintf(temp, tamanho, "%s%s %s;\n", $1, tipoAtual, $3);
@@ -270,6 +318,15 @@ atribuicao:
         if (!verificarVariavelDeclarada($1)) {
             YYABORT;
         }
+
+        // Verificando se o tipo da variável e da expressão são compatíveis
+        char *tipoVar = obterTipoVariavel($1);
+        char *tipoExpr = $3;
+
+        if (!verificarTipoAtribuicao($1, tipoVar, tipoExpr)) {
+            YYABORT;
+        }
+
         char *codigo = malloc(strlen($1) + strlen($3) + 10);
         sprintf(codigo, "%s = %s;\n", $1, $3);
         $$ = codigo;
@@ -303,28 +360,28 @@ expressao:
         if (!verificarTipoParaOperacao($1, $3)) {
             YYABORT;
         }
-        $$ = malloc(strlen($1) + strlen($3) + 4);
+        $$ = strdup("operacao de soma");
         sprintf($$, "%s + %s", $1, $3);
     }
     | expressao MENOS expressao {
         if (!verificarTipoParaOperacao($1, $3)) {
             YYABORT;
         }
-        $$ = malloc(strlen($1) + strlen($3) + 4);
+        $$ = strdup("operacao de subtração");
         sprintf($$, "%s - %s", $1, $3);
     }
     | expressao MULTIPLICACAO expressao {
         if (!verificarTipoParaOperacao($1, $3)) {
             YYABORT;
         }
-        $$ = malloc(strlen($1) + strlen($3) + 4);
+        $$ = strdup("operacao de multiplicação");
         sprintf($$, "%s * %s", $1, $3);
     }
     | expressao DIVISAO expressao {
         if (!verificarTipoParaOperacao($1, $3)) {
             YYABORT;
         }
-        $$ = malloc(strlen($1) + strlen($3) + 4);
+        $$ = strdup("operacao de divisão");
         sprintf($$, "%s / %s", $1, $3);
     }
     | expressao IGUAL_IGUAL expressao {

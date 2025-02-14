@@ -29,7 +29,6 @@ Serial.println("Conectado ao WiFi!");
 
 void loop()
 {
-valor2 = sensor + url;
 sensorValor = analogRead(sensor);
 Serial.println("Valor do sensor: ");
 Serial.println(sensorValor);
