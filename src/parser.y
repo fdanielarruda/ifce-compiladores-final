@@ -21,29 +21,15 @@ struct VariavelDeclarada {
 
 struct VariavelDeclarada *variaveis = NULL;
 
-struct PinoPWM {
+struct Pino {
     char *nome;
     int configurado;
-    struct PinoPWM *prox;
+    struct Pino *prox;
 };
 
-struct PinoPWM *pinosPWM = NULL;
-
-struct PinoEntrada {
-    char *nome;
-    int configurado;
-    struct PinoEntrada *prox;
-};
-
-struct PinoEntrada *pinosEntrada = NULL;
-
-struct PinoSaida {
-    char *nome;
-    int configurado;
-    struct PinoSaida *prox;
-};
-
-struct PinoSaida *pinosSaida = NULL;
+struct Pino *pinosPWM = NULL;
+struct Pino *pinosEntrada = NULL;
+struct Pino *pinosSaida = NULL;
 
 int variavelJaDeclarada(const char *nome) {
     struct VariavelDeclarada *atual = variaveis;
@@ -151,6 +137,12 @@ int verificarTipoParaOperacao(char *var1, char *var2) {
     return 1;
 }
 
+void gerarErroTipoIncompativel(const char *nomeVar, const char *tipoEsperado) {
+    char mensagem[256];
+    snprintf(mensagem, sizeof(mensagem), "Tipos incompatíveis na atribuição. A variável '%s' deve ser do tipo %s.", nomeVar, tipoEsperado);
+    yyerror(mensagem);
+}
+
 int verificarTipoAtribuicao(char *nomeVar, char *tipoVar, char *valor) {
     int tipoValor = 0; // 0: indefinido, 1: inteiro, 2: string
 
@@ -169,34 +161,28 @@ int verificarTipoAtribuicao(char *nomeVar, char *tipoVar, char *valor) {
 
     // Comparar tipos e gerar mensagem de erro
     if (strcmp(tipoVar, "int") == 0 && tipoValor != 1) {
-        char mensagem[256];
-        snprintf(mensagem, sizeof(mensagem), "Tipos incompatíveis na atribuição. A variável '%s' deve ser do tipo %s.", nomeVar, tipoVar);
-        yyerror(mensagem);
+        gerarErroTipoIncompativel(nomeVar, "int");
         return 0;
     }
 
     if (strcmp(tipoVar, "String") == 0 && tipoValor != 2) {
-        char mensagem[256];
-        snprintf(mensagem, sizeof(mensagem), "Tipos incompatíveis na atribuição. A variável '%s' deve ser do tipo %s.", nomeVar, tipoVar);
-        yyerror(mensagem);
+        gerarErroTipoIncompativel(nomeVar, "String");
         return 0;
     }
 
     return 1;
 }
 
-// Adicionar pino à lista de PWM configurados
-void adicionarPinoPWM(const char *nome) {
-    struct PinoPWM *novo = malloc(sizeof(struct PinoPWM));
+void adicionarPino(struct Pino **lista, const char *nome) {
+    struct Pino *novo = malloc(sizeof(struct Pino));
     novo->nome = strdup(nome);
     novo->configurado = 1;
-    novo->prox = pinosPWM;
-    pinosPWM = novo;
+    novo->prox = *lista;
+    *lista = novo;
 }
 
-// Verificar se pino foi configurado para PWM
-int pinoPWMConfigurado(const char *nome) {
-    struct PinoPWM *atual = pinosPWM;
+int pinoConfigurado(struct Pino *lista, const char *nome) {
+    struct Pino *atual = lista;
     while (atual != NULL) {
         if (strcmp(atual->nome, nome) == 0) {
             return atual->configurado;
@@ -206,76 +192,44 @@ int pinoPWMConfigurado(const char *nome) {
     return 0;
 }
 
-void liberarPinosPWM() {
-    struct PinoPWM *atual = pinosPWM;
+void liberarPinos(struct Pino **lista) {
+    struct Pino *atual = *lista;
     while (atual != NULL) {
-        struct PinoPWM *temp = atual;
+        struct Pino *temp = atual;
         atual = atual->prox;
         free(temp->nome);
         free(temp);
     }
-    pinosPWM = NULL;
+    *lista = NULL;
 }
 
-void adicionarPinoEntrada(const char *nome) {
-    struct PinoEntrada *novo = malloc(sizeof(struct PinoEntrada));
-    novo->nome = strdup(nome);
-    novo->configurado = 1;
-    novo->prox = pinosEntrada;
-    pinosEntrada = novo;
+char* gerarCodigoAtribuicao(const char *nomeVar, const char *valor) {
+    char *codigo = malloc(strlen(nomeVar) + strlen(valor) + 10);
+    sprintf(codigo, "%s = %s;\n", nomeVar, valor);
+    return codigo;
 }
 
-int pinoEntradaConfigurado(const char *nome) {
-    struct PinoEntrada *atual = pinosEntrada;
-    while (atual != NULL) {
-        if (strcmp(atual->nome, nome) == 0) {
-            return atual->configurado;
-        }
-        atual = atual->prox;
+char* gerarCodigoOperacaoHardware(const char *comando, const char *pino, const char *valor) {
+    char *codigo = malloc(strlen(comando) + strlen(pino) + (valor ? strlen(valor) : 0) + 20);
+    if (valor) {
+        sprintf(codigo, "%s(%s, %s);\n", comando, pino, valor);
+    } else {
+        sprintf(codigo, "%s(%s);\n", comando, pino);
     }
-    return 0;
+    return codigo;
 }
 
-void liberarPinosEntrada() {
-    struct PinoEntrada *atual = pinosEntrada;
-    while (atual != NULL) {
-        struct PinoEntrada *temp = atual;
-        atual = atual->prox;
-        free(temp->nome);
-        free(temp);
-    }
-    pinosEntrada = NULL;
-}
+void adicionarPinoPWM(const char *nome) { adicionarPino(&pinosPWM, nome); }
+int pinoPWMConfigurado(const char *nome) { return pinoConfigurado(pinosPWM, nome); }
+void liberarPinosPWM() { liberarPinos(&pinosPWM); }
 
-void adicionarPinoSaida(const char *nome) {
-    struct PinoSaida *novo = malloc(sizeof(struct PinoSaida));
-    novo->nome = strdup(nome);
-    novo->configurado = 1;
-    novo->prox = pinosSaida;
-    pinosSaida = novo;
-}
+void adicionarPinoEntrada(const char *nome) { adicionarPino(&pinosEntrada, nome); }
+int pinoEntradaConfigurado(const char *nome) { return pinoConfigurado(pinosEntrada, nome); }
+void liberarPinosEntrada() { liberarPinos(&pinosEntrada); }
 
-int pinoSaidaConfigurado(const char *nome) {
-    struct PinoSaida *atual = pinosSaida;
-    while (atual != NULL) {
-        if (strcmp(atual->nome, nome) == 0) {
-            return atual->configurado;
-        }
-        atual = atual->prox;
-    }
-    return 0;
-}
-
-void liberarPinosSaida() {
-    struct PinoSaida *atual = pinosSaida;
-    while (atual != NULL) {
-        struct PinoSaida *temp = atual;
-        atual = atual->prox;
-        free(temp->nome);
-        free(temp);
-    }
-    pinosSaida = NULL;
-}
+void adicionarPinoSaida(const char *nome) { adicionarPino(&pinosSaida, nome); }
+int pinoSaidaConfigurado(const char *nome) { return pinoConfigurado(pinosSaida, nome); }
+void liberarPinosSaida() { liberarPinos(&pinosSaida); }
 
 %}
 
