@@ -1,7 +1,6 @@
 // Declaração de variáveis
 var inteiro: ledPin, brilho;
-var texto: ssid;
-var inteiro: senha;
+var texto: ssid, senha;
 
 // Função de setup
 config

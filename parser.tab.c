@@ -80,7 +80,19 @@ extern FILE *yyin;
 
 char *codigoGerado = NULL;
 
-#line 84 "parser.tab.c"
+void appendCode(const char *novoCodigo) {
+    if (codigoGerado == NULL) {
+        codigoGerado = strdup(novoCodigo);
+    } else {
+        char *temp = malloc(strlen(codigoGerado) + strlen(novoCodigo) + 1);
+        strcpy(temp, codigoGerado);
+        strcat(temp, novoCodigo);
+        free(codigoGerado);
+        codigoGerado = temp;
+    }
+}
+
+#line 96 "parser.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -505,7 +517,7 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  9
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   180
+#define YYLAST   179
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  51
@@ -566,13 +578,13 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint8 yyrline[] =
+static const yytype_int16 yyrline[] =
 {
-       0,    45,    45,    49,    50,    54,    58,    59,    60,    64,
-      65,    69,    73,    74,    78,    79,    80,    81,    82,    83,
-      87,    91,    92,    93,    94,    95,    96,    97,   101,   105,
-     109,   113,   114,   118,   119,   123,   127,   128,   129,   130,
-     131,   132,   133,   134,   135,   139
+       0,    60,    60,    69,    70,    78,    86,    87,    88,    92,
+      93,   101,   109,   110,   119,   120,   121,   122,   123,   124,
+     128,   136,   141,   146,   151,   156,   161,   164,   170,   178,
+     186,   194,   195,   199,   204,   212,   220,   225,   230,   235,
+     240,   245,   250,   255,   260,   268
 };
 #endif
 
@@ -625,17 +637,17 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-      23,    -4,    41,    25,   -38,   -38,   -38,   -38,    -6,   -38,
-     152,   -38,    17,    43,    13,    58,    59,    62,    63,    66,
-      67,    68,    69,    70,    85,    89,    91,    33,    33,    64,
+      23,    -4,    31,    30,    23,   -38,   -38,   -38,    -8,   -38,
+     152,    17,   -38,    40,    11,    45,    58,    59,    62,    63,
+      66,    67,    65,    69,    68,    71,    87,    32,    32,    64,
      -38,   -38,   -38,   -38,   -38,   -38,   -38,   -38,   -38,   152,
-     -38,   -38,   -36,    33,    40,    65,    93,    51,    73,    82,
-      88,    90,    92,    95,   110,   112,   -38,   -38,   -38,     7,
-      15,   -38,   -38,    86,   111,   -38,   -35,    84,   101,   113,
-     -38,   -38,   106,   -38,   -38,   -38,   -38,   -38,   -38,   152,
-      33,    33,    33,    33,   152,   -38,   -38,   -38,   114,   135,
-     -38,   115,     3,    -5,    -5,   -38,   -38,   108,   -38,    83,
-     117,   152,   -38,   -38,   173,   -38,   130,   132,   -38,   -38
+     -38,   -38,   -36,    32,    61,    82,    91,    47,    48,    84,
+      51,    70,    73,    88,    90,    92,   -38,   -38,   -38,     7,
+      15,   -38,   -38,    86,   113,   -38,   -35,    85,   101,    95,
+     -38,   -38,    89,   -38,   -38,   -38,   -38,   -38,   -38,   152,
+      32,    32,    32,    32,   152,   -38,   -38,   -38,   110,   156,
+     -38,   153,     3,    -6,    -6,   -38,   -38,   108,   -38,   127,
+     114,   152,   -38,   -38,   161,   -38,   130,   129,   -38,   -38
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -643,8 +655,8 @@ static const yytype_int16 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     0,     0,     0,     3,     6,     7,     8,     0,     1,
-       0,     4,     0,     0,     0,     0,     0,     0,     0,     0,
+       3,     0,     0,     0,     3,     6,     7,     8,     0,     1,
+       0,     0,     4,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
       12,    14,    15,    16,    17,    18,    31,    32,    19,     0,
        2,     9,     0,     0,     0,     0,     0,     0,     0,     0,
@@ -659,14 +671,14 @@ static const yytype_int8 yydefact[] =
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-     -38,   -38,   -38,   175,   -38,   -38,   -38,   -37,   -29,   -38,
+     -38,   -38,   174,   -38,   -38,   -38,   -38,   -37,   -29,   -38,
      -27,   -38,   -38,   -38,   -38,   -38,   -38,   -38,   -38
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     2,     3,     4,     8,    42,    12,    29,    30,    31,
+       0,     2,     3,     4,     8,    42,    11,    29,    30,    31,
       59,    32,    33,    34,    35,    36,    37,    38,    40
 };
 
@@ -678,22 +690,21 @@ static const yytype_int8 yytable[] =
       62,    60,    63,     5,     6,     7,    14,    80,    81,    82,
       83,    64,    65,    87,    15,    16,    66,    17,    18,    19,
       20,    21,    22,    23,    24,    25,    26,    27,   101,     1,
-      28,     1,   102,    79,    62,    10,    56,    57,    58,    82,
-      83,     9,    92,    13,    84,    39,    41,    97,    43,    80,
+      28,     9,   102,    79,    62,    56,    57,    58,    82,    83,
+      10,    13,    92,    41,    84,    39,    43,    97,    44,    80,
       81,    82,    83,    93,    94,    95,    96,    80,    81,    82,
-      83,    44,    45,    62,   106,    46,    47,    14,    62,    48,
-      49,    67,    50,    52,    51,    15,    16,    62,    17,    18,
+      83,    45,    46,    62,   106,    47,    48,    14,    62,    49,
+      51,    50,    52,    53,    54,    15,    16,    62,    17,    18,
       19,    20,    21,    22,    23,    24,    25,    26,    27,    14,
-      53,    28,    54,    61,    55,    68,    69,    15,    16,    70,
+      55,    28,    67,    61,    69,    70,    71,    15,    16,    73,
       17,    18,    19,    20,    21,    22,    23,    24,    25,    26,
-      27,    14,    72,    28,    86,    85,    88,   104,   100,    15,
-      16,    71,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    14,    89,    28,    73,   103,    74,    99,
-      75,    15,    16,    76,    17,    18,    19,    20,    21,    22,
-      23,    24,    25,    26,    27,    14,    91,    28,    77,   108,
-      78,    90,    98,    15,    16,   105,    17,    18,    19,    20,
-      21,    22,    23,    24,    25,    26,    27,   107,    11,    28,
-     109
+      27,    14,    68,    28,    72,    85,    86,    88,    74,    15,
+      16,    75,    17,    18,    19,    20,    21,    22,    23,    24,
+      25,    26,    27,    14,    89,    28,    76,   103,    77,    91,
+      78,    15,    16,    90,    17,    18,    19,    20,    21,    22,
+      23,    24,    25,    26,    27,    14,   100,    28,    98,   108,
+      99,   104,   105,    15,    16,   107,    17,    18,    19,    20,
+      21,    22,    23,    24,    25,    26,    27,   109,    12,    28
 };
 
 static const yytype_int8 yycheck[] =
@@ -701,22 +712,21 @@ static const yytype_int8 yycheck[] =
       29,    28,    39,     7,     8,     9,     3,    42,    43,    44,
       45,    47,    48,    48,    11,    12,    43,    14,    15,    16,
       17,    18,    19,    20,    21,    22,    23,    24,    25,     6,
-      27,     6,    29,    26,    63,    10,     3,     4,     5,    44,
-      45,     0,    79,    49,    29,    28,     3,    84,    35,    42,
+      27,     0,    29,    26,    63,     3,     4,     5,    44,    45,
+      10,    49,    79,     3,    29,    28,    35,    84,     3,    42,
       43,    44,    45,    80,    81,    82,    83,    42,    43,    44,
       45,     3,     3,    92,   101,     3,     3,     3,    97,     3,
-       3,    31,     4,     3,     5,    11,    12,   106,    14,    15,
+       5,     4,     3,     5,     3,    11,    12,   106,    14,    15,
       16,    17,    18,    19,    20,    21,    22,    23,    24,     3,
-       5,    27,     3,    29,     3,    30,     3,    11,    12,    48,
+       3,    27,    31,    29,     3,    48,    48,    11,    12,    48,
       14,    15,    16,    17,    18,    19,    20,    21,    22,    23,
-      24,     3,    30,    27,     3,    29,    32,    34,     3,    11,
+      24,     3,    30,    27,    30,    29,     3,    32,    48,    11,
       12,    48,    14,    15,    16,    17,    18,    19,    20,    21,
-      22,    23,    24,     3,    33,    27,    48,    29,    48,     4,
+      22,    23,    24,     3,    33,    27,    48,    29,    48,    50,
       48,    11,    12,    48,    14,    15,    16,    17,    18,    19,
-      20,    21,    22,    23,    24,     3,    50,    27,    48,    29,
-      48,    48,    48,    11,    12,    48,    14,    15,    16,    17,
-      18,    19,    20,    21,    22,    23,    24,     4,     3,    27,
-      48
+      20,    21,    22,    23,    24,     3,     3,    27,    48,    29,
+       4,    34,    48,    11,    12,     4,    14,    15,    16,    17,
+      18,    19,    20,    21,    22,    23,    24,    48,     4,    27
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -724,7 +734,7 @@ static const yytype_int8 yycheck[] =
 static const yytype_int8 yystos[] =
 {
        0,     6,    52,    53,    54,     7,     8,     9,    55,     0,
-      10,    54,    57,    49,     3,    11,    12,    14,    15,    16,
+      10,    57,    53,    49,     3,    11,    12,    14,    15,    16,
       17,    18,    19,    20,    21,    22,    23,    24,    27,    58,
       59,    60,    62,    63,    64,    65,    66,    67,    68,    28,
       69,     3,    56,    35,     3,     3,     3,     3,     3,     3,
@@ -749,7 +759,7 @@ static const yytype_int8 yyr1[] =
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     3,     1,     2,     5,     1,     1,     1,     1,
+       0,     2,     3,     0,     2,     5,     1,     1,     1,     1,
        3,     3,     1,     2,     1,     1,     1,     1,     1,     1,
        4,     3,     3,     3,     3,     1,     1,     1,     5,     8,
        4,     1,     1,     7,     5,     5,     3,     3,     6,     3,
@@ -1216,8 +1226,349 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
+  case 2: /* programa: declaracoes configuracao loop  */
+#line 60 "parser.y"
+                                  {
+        char *temp = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 50);
+        sprintf(temp, "#include <Arduino.h>\n#include <WiFi.h>\n\n%s%s%s", (yyvsp[-2].str), (yyvsp[-1].str), (yyvsp[0].str));
+        appendCode(temp);
+        (yyval.str) = temp;
+    }
+#line 1238 "parser.tab.c"
+    break;
 
-#line 1221 "parser.tab.c"
+  case 3: /* declaracoes: %empty  */
+#line 69 "parser.y"
+                { (yyval.str) = strdup(""); }
+#line 1244 "parser.tab.c"
+    break;
+
+  case 4: /* declaracoes: declaracao declaracoes  */
+#line 70 "parser.y"
+                             { 
+        char *temp = malloc(strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 2);
+        sprintf(temp, "%s\n%s", (yyvsp[-1].str), (yyvsp[0].str));
+        (yyval.str) = temp;
+    }
+#line 1254 "parser.tab.c"
+    break;
+
+  case 5: /* declaracao: VAR tipo DOISPONTOS listaIdentificadores PONTOEVIRGULA  */
+#line 78 "parser.y"
+                                                           {
+        char *codigo = malloc(strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 20);
+        sprintf(codigo, "%s %s;", (yyvsp[-3].str), (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1264 "parser.tab.c"
+    break;
+
+  case 6: /* tipo: INTEIRO  */
+#line 86 "parser.y"
+            { (yyval.str) = strdup("int"); }
+#line 1270 "parser.tab.c"
+    break;
+
+  case 7: /* tipo: TEXTO  */
+#line 87 "parser.y"
+            { (yyval.str) = strdup("String"); }
+#line 1276 "parser.tab.c"
+    break;
+
+  case 8: /* tipo: BOOLEANO  */
+#line 88 "parser.y"
+               { (yyval.str) = strdup("bool"); }
+#line 1282 "parser.tab.c"
+    break;
+
+  case 9: /* listaIdentificadores: IDENTIFICADOR  */
+#line 92 "parser.y"
+                  { (yyval.str) = strdup((yyvsp[0].str)); }
+#line 1288 "parser.tab.c"
+    break;
+
+  case 10: /* listaIdentificadores: listaIdentificadores VIRGULA IDENTIFICADOR  */
+#line 93 "parser.y"
+                                                 {
+        char *temp = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 3);
+        sprintf(temp, "%s, %s", (yyvsp[-2].str), (yyvsp[0].str));
+        (yyval.str) = temp;
+    }
+#line 1298 "parser.tab.c"
+    break;
+
+  case 11: /* configuracao: CONFIG comandos FIM  */
+#line 101 "parser.y"
+                        {
+        char *codigo = malloc(strlen((yyvsp[-1].str)) + 50);
+        sprintf(codigo, "void setup() {\n%s}\n", (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1308 "parser.tab.c"
+    break;
+
+  case 12: /* comandos: comando  */
+#line 109 "parser.y"
+            { (yyval.str) = strdup((yyvsp[0].str)); }
+#line 1314 "parser.tab.c"
+    break;
+
+  case 13: /* comandos: comandos comando  */
+#line 110 "parser.y"
+                       {
+        char *temp = malloc(strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 1);
+        strcpy(temp, (yyvsp[-1].str));
+        strcat(temp, (yyvsp[0].str));
+        (yyval.str) = temp;
+    }
+#line 1325 "parser.tab.c"
+    break;
+
+  case 20: /* atribuicao: IDENTIFICADOR IGUAL expressao PONTOEVIRGULA  */
+#line 128 "parser.y"
+                                                {
+        char *codigo = malloc(strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 10);
+        sprintf(codigo, "%s = %s;", (yyvsp[-3].str), (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1335 "parser.tab.c"
+    break;
+
+  case 21: /* expressao: expressao MAIS expressao  */
+#line 136 "parser.y"
+                             {
+        (yyval.str) = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 4);
+        sprintf((yyval.str), "%s + %s", (yyvsp[-2].str), (yyvsp[0].str));
+    }
+#line 1344 "parser.tab.c"
+    break;
+
+  case 22: /* expressao: expressao MENOS expressao  */
+#line 141 "parser.y"
+                                {
+        (yyval.str) = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 4);
+        sprintf((yyval.str), "%s - %s", (yyvsp[-2].str), (yyvsp[0].str));
+    }
+#line 1353 "parser.tab.c"
+    break;
+
+  case 23: /* expressao: expressao MULTIPLICACAO expressao  */
+#line 146 "parser.y"
+                                        {
+        (yyval.str) = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 4);
+        sprintf((yyval.str), "%s * %s", (yyvsp[-2].str), (yyvsp[0].str));
+    }
+#line 1362 "parser.tab.c"
+    break;
+
+  case 24: /* expressao: expressao DIVISAO expressao  */
+#line 151 "parser.y"
+                                  {
+        (yyval.str) = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 4);
+        sprintf((yyval.str), "%s / %s", (yyvsp[-2].str), (yyvsp[0].str));
+    }
+#line 1371 "parser.tab.c"
+    break;
+
+  case 25: /* expressao: NUMERO  */
+#line 156 "parser.y"
+             {
+        (yyval.str) = malloc(20);
+        sprintf((yyval.str), "%d", (yyvsp[0].num));
+    }
+#line 1380 "parser.tab.c"
+    break;
+
+  case 26: /* expressao: IDENTIFICADOR  */
+#line 161 "parser.y"
+                    {
+        (yyval.str) = strdup((yyvsp[0].str));
+    }
+#line 1388 "parser.tab.c"
+    break;
+
+  case 27: /* expressao: STRING  */
+#line 164 "parser.y"
+             {
+        (yyval.str) = strdup((yyvsp[0].str));
+    }
+#line 1396 "parser.tab.c"
+    break;
+
+  case 28: /* configuracaoPino: CONFIGURAR IDENTIFICADOR COMO SAIDA PONTOEVIRGULA  */
+#line 170 "parser.y"
+                                                      {
+        char *codigo = malloc(strlen((yyvsp[-3].str)) + 30);
+        sprintf(codigo, "pinMode(%s, OUTPUT);", (yyvsp[-3].str));
+        (yyval.str) = codigo;
+    }
+#line 1406 "parser.tab.c"
+    break;
+
+  case 29: /* configuracaoPWM: CONFIGURARPWM IDENTIFICADOR COM FREQUENCIA NUMERO RESOLUCAO NUMERO PONTOEVIRGULA  */
+#line 178 "parser.y"
+                                                                                     {
+        char *codigo = malloc(strlen((yyvsp[-6].str)) + 50);
+        sprintf(codigo, "ledcSetup(%s, %d, %d);", (yyvsp[-6].str), (yyvsp[-3].num), (yyvsp[-1].num));
+        (yyval.str) = codigo;
+    }
+#line 1416 "parser.tab.c"
+    break;
+
+  case 30: /* conexaoWifi: CONECTARWIFI IDENTIFICADOR IDENTIFICADOR PONTOEVIRGULA  */
+#line 186 "parser.y"
+                                                           {
+        char *codigo = malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[-1].str)) + 170);
+        sprintf(codigo, "WiFi.begin(%s.c_str(), %s.c_str());\nwhile (WiFi.status() != WL_CONNECTED) {\n    delay(500);\n    Serial.println(\"Conectando ao WiFi...\");\n}\nSerial.println(\"Conectado ao WiFi!\");", (yyvsp[-2].str), (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1426 "parser.tab.c"
+    break;
+
+  case 31: /* controleFluxo: condicional  */
+#line 194 "parser.y"
+                { (yyval.str) = (yyvsp[0].str); }
+#line 1432 "parser.tab.c"
+    break;
+
+  case 32: /* controleFluxo: repeticao  */
+#line 195 "parser.y"
+                { (yyval.str) = (yyvsp[0].str); }
+#line 1438 "parser.tab.c"
+    break;
+
+  case 33: /* condicional: SE expressao ENTAO comandos SENAO comandos FIM  */
+#line 199 "parser.y"
+                                                   {
+        char *codigo = malloc(strlen((yyvsp[-5].str)) + strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 50);
+        sprintf(codigo, "if (%s) { %s } else { %s }", (yyvsp[-5].str), (yyvsp[-3].str), (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1448 "parser.tab.c"
+    break;
+
+  case 34: /* condicional: SE expressao ENTAO comandos FIM  */
+#line 204 "parser.y"
+                                      {
+        char *codigo = malloc(strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 30);
+        sprintf(codigo, "if (%s) { %s }", (yyvsp[-3].str), (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1458 "parser.tab.c"
+    break;
+
+  case 35: /* repeticao: ENQUANTO expressao FIM comandos FIM  */
+#line 212 "parser.y"
+                                        {
+        char *codigo = malloc(strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 30);
+        sprintf(codigo, "while (%s) { %s }", (yyvsp[-3].str), (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1468 "parser.tab.c"
+    break;
+
+  case 36: /* operacaoHardware: LIGAR IDENTIFICADOR PONTOEVIRGULA  */
+#line 220 "parser.y"
+                                      {
+        char *codigo = malloc(strlen((yyvsp[-1].str)) + 20);
+        sprintf(codigo, "digitalWrite(%s, HIGH);", (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1478 "parser.tab.c"
+    break;
+
+  case 37: /* operacaoHardware: DESLIGAR IDENTIFICADOR PONTOEVIRGULA  */
+#line 225 "parser.y"
+                                           {
+        char *codigo = malloc(strlen((yyvsp[-1].str)) + 25);
+        sprintf(codigo, "digitalWrite(%s, LOW);", (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1488 "parser.tab.c"
+    break;
+
+  case 38: /* operacaoHardware: AJUSTARPWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTOEVIRGULA  */
+#line 230 "parser.y"
+                                                                     {
+        char *codigo = malloc(strlen((yyvsp[-4].str)) + strlen((yyvsp[-1].str)) + 40);
+        sprintf(codigo, "ledcWrite(%s, %s);", (yyvsp[-4].str), (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1498 "parser.tab.c"
+    break;
+
+  case 39: /* operacaoHardware: ESPERAR NUMERO PONTOEVIRGULA  */
+#line 235 "parser.y"
+                                   {
+        char *codigo = malloc(20);
+        sprintf(codigo, "delay(%d);", (yyvsp[-1].num));
+        (yyval.str) = codigo;
+    }
+#line 1508 "parser.tab.c"
+    break;
+
+  case 40: /* operacaoHardware: ESCREVER_SERIAL STRING PONTOEVIRGULA  */
+#line 240 "parser.y"
+                                           {
+        char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
+        sprintf(codigo, "Serial.println(%s);", (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1518 "parser.tab.c"
+    break;
+
+  case 41: /* operacaoHardware: LER_SERIAL IDENTIFICADOR PONTOEVIRGULA  */
+#line 245 "parser.y"
+                                             {
+        char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
+        sprintf(codigo, "%s = Serial.readString();", (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1528 "parser.tab.c"
+    break;
+
+  case 42: /* operacaoHardware: ENVIAR_HTTP STRING PONTOEVIRGULA  */
+#line 250 "parser.y"
+                                       {
+        char *codigo = malloc(strlen((yyvsp[-1].str)) + 50);
+        sprintf(codigo, "http.begin(%s);\nhttp.GET();", (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1538 "parser.tab.c"
+    break;
+
+  case 43: /* operacaoHardware: LER_DIGITAL IDENTIFICADOR PONTOEVIRGULA  */
+#line 255 "parser.y"
+                                              {
+        char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
+        sprintf(codigo, "%s = digitalRead(%s);", (yyvsp[-1].str), (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1548 "parser.tab.c"
+    break;
+
+  case 44: /* operacaoHardware: LER_ANALOGICO IDENTIFICADOR PONTOEVIRGULA  */
+#line 260 "parser.y"
+                                                {
+        char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
+        sprintf(codigo, "%s = analogRead(%s);", (yyvsp[-1].str), (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1558 "parser.tab.c"
+    break;
+
+  case 45: /* loop: REPITA comandos FIM  */
+#line 268 "parser.y"
+                        {
+        char *codigo = malloc(strlen((yyvsp[-1].str)) + 30);
+        sprintf(codigo, "void loop() {\n%s}\n", (yyvsp[-1].str));
+        (yyval.str) = codigo;
+    }
+#line 1568 "parser.tab.c"
+    break;
+
+
+#line 1572 "parser.tab.c"
 
       default: break;
     }
@@ -1410,7 +1761,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 142 "parser.y"
+#line 275 "parser.y"
 
 
 void yyerror(const char *msg) {
@@ -1433,7 +1784,13 @@ int main(int argc, char **argv) {
     yyparse();
 
     if (codigoGerado) {
-        printf("%s", codigoGerado);
+        FILE *arquivo = fopen("resultados/output.cpp", "w");
+        if (arquivo) {
+            fprintf(arquivo, "%s", codigoGerado);
+            fclose(arquivo);
+        } else {
+            perror("Erro ao criar o arquivo de saída");
+        }
         free(codigoGerado);
     }
 
