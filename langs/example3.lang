@@ -1,5 +1,5 @@
 // Declaração de variáveis
-var inteiro: sensor, sensorValor, valor2;
+var inteiro: sensor, sensorValor;
 var texto: url, payload, ssid, senha;
 
 // Função de setup

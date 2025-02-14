@@ -3,7 +3,6 @@
 
 int sensor;
 int sensorValor;
-int valor2;
 String url;
 String payload;
 String ssid;

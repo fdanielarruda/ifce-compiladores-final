@@ -9,6 +9,7 @@ void setup()
 {
 ledPin = 2;
 botaoPin = 4;
+pinMode(ledPin, OUTPUT);
 pinMode(botaoPin, INPUT);
 }
 
