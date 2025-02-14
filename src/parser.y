@@ -21,6 +21,14 @@ struct VariavelDeclarada {
 
 struct VariavelDeclarada *variaveis = NULL;
 
+struct PinoPWM {
+    char *nome;
+    int configurado;
+    struct PinoPWM *prox;
+};
+
+struct PinoPWM *pinosPWM = NULL;
+
 int variavelJaDeclarada(const char *nome) {
     struct VariavelDeclarada *atual = variaveis;
     while (atual != NULL) {
@@ -159,6 +167,38 @@ int verificarTipoAtribuicao(char *nomeVar, char *tipoVar, char *valor) {
     }
 
     return 1;
+}
+
+// Adicionar pino à lista de PWM configurados
+void adicionarPinoPWM(const char *nome) {
+    struct PinoPWM *novo = malloc(sizeof(struct PinoPWM));
+    novo->nome = strdup(nome);
+    novo->configurado = 1;
+    novo->prox = pinosPWM;
+    pinosPWM = novo;
+}
+
+// Verificar se pino foi configurado para PWM
+int pinoPWMConfigurado(const char *nome) {
+    struct PinoPWM *atual = pinosPWM;
+    while (atual != NULL) {
+        if (strcmp(atual->nome, nome) == 0) {
+            return atual->configurado;
+        }
+        atual = atual->prox;
+    }
+    return 0;
+}
+
+void liberarPinosPWM() {
+    struct PinoPWM *atual = pinosPWM;
+    while (atual != NULL) {
+        struct PinoPWM *temp = atual;
+        atual = atual->prox;
+        free(temp->nome);
+        free(temp);
+    }
+    pinosPWM = NULL;
 }
 
 %}
@@ -446,6 +486,9 @@ configuracaoPWM:
         if (!verificarVariavelDeclarada($2)) {
             YYABORT;
         }
+
+        adicionarPinoPWM($2);
+
         char constantes[200];
         char codigo[200];
 
@@ -524,6 +567,12 @@ operacaoHardware:
     }
     | AJUSTARPWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTOEVIRGULA {
         if (!verificarVariavelDeclarada($2)) {
+            YYABORT;
+        }
+        if (!pinoPWMConfigurado($2)) {
+            char erro[256];
+            snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado para PWM", $2);
+            yyerror(erro);
             YYABORT;
         }
         if (!verificarVariavelDeclarada($5)) {
@@ -631,6 +680,7 @@ int main(int argc, char **argv) {
         free(codigoGerado);
     }
 
-    liberarVariaveis(); // Libera a memória da lista de variáveis
+    liberarVariaveis();
+    liberarPinosPWM();
     return 0;
 }
