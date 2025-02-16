@@ -4,9 +4,75 @@
 #include <string.h>
 #include <ctype.h>
 
+/* Estrutura para os nós da árvore sintática */
+typedef struct NoArvore {
+    char *rotulo;
+    int numFilhos;
+    struct NoArvore **filhos;
+} NoArvore;
+
+NoArvore *novoNoArvore(const char *rotulo) {
+    NoArvore *no = (NoArvore *)malloc(sizeof(NoArvore));
+    if (!no) {
+        fprintf(stderr, "Erro ao alocar memória para o nó da árvore\n");
+        exit(1);
+    }
+    no->rotulo = strdup(rotulo);
+    no->numFilhos = 0;
+    no->filhos = NULL;
+    return no;
+}
+
+void adicionarFilho(NoArvore *pai, NoArvore *filho) {
+    pai->numFilhos++;
+    pai->filhos = (NoArvore **)realloc(pai->filhos, pai->numFilhos * sizeof(NoArvore *));
+    if (!pai->filhos) {
+        fprintf(stderr, "Erro ao alocar memória para os filhos da árvore\n");
+        exit(1);
+    }
+    pai->filhos[pai->numFilhos - 1] = filho;
+}
+
+void imprimirArvore(NoArvore *no, int nivel) {
+    for (int i = 0; i < nivel; i++) 
+        printf("  ");
+    printf("%s\n", no->rotulo);
+    for (int i = 0; i < no->numFilhos; i++) {
+        imprimirArvore(no->filhos[i], nivel + 1);
+    }
+}
+
+void liberarArvore(NoArvore *no) {
+    if (no) {
+        for (int i = 0; i < no->numFilhos; i++) {
+            liberarArvore(no->filhos[i]);
+        }
+        free(no->filhos);
+        free(no->rotulo);
+        free(no);
+    }
+}
+
+void exportarArvoreParaArquivo(NoArvore *no, int nivel, FILE *arquivo) {
+    for (int i = 0; i < nivel; i++) {
+        fprintf(arquivo, "  ");
+    }
+    fprintf(arquivo, "%s\n", no->rotulo);
+    for (int i = 0; i < no->numFilhos; i++) {
+        exportarArvoreParaArquivo(no->filhos[i], nivel + 1, arquivo);
+    }
+}
+
+typedef struct SemInfo {
+    char *codigo;
+    NoArvore *no;
+} SemInfo;
+
+
+NoArvore *arvoreSintatica = NULL;
+
 void yyerror(const char *s);
 int yylex();
-
 extern FILE *yyin;
 
 char *codigoGerado = NULL;
@@ -18,7 +84,6 @@ struct VariavelDeclarada {
     char *tipo;
     struct VariavelDeclarada *prox;
 };
-
 struct VariavelDeclarada *variaveis = NULL;
 
 struct Pino {
@@ -26,11 +91,11 @@ struct Pino {
     int configurado;
     struct Pino *prox;
 };
-
 struct Pino *pinosPWM = NULL;
 struct Pino *pinosEntrada = NULL;
 struct Pino *pinosSaida = NULL;
 
+/* Funções de manipulação de variáveis e pinos */
 int variavelJaDeclarada(const char *nome) {
     struct VariavelDeclarada *atual = variaveis;
     while (atual != NULL) {
@@ -60,7 +125,7 @@ char* obterTipoVariavel(const char *nome) {
         }
         atual = atual->prox;
     }
-    return NULL; // Caso a variável não tenha sido declarada
+    return NULL;
 }
 
 void adicionarVariavel(const char *nome, const char *tipo) {
@@ -83,12 +148,12 @@ void liberarVariaveis() {
     variaveis = NULL;
 }
 
-void appendCode(const char *novoCodigo) {
+void acrescentarCodigo(const char *novoCodigo) {
     if (codigoGerado == NULL) {
         codigoGerado = strdup(novoCodigo);
     } else {
-        size_t novoTamanho = strlen(codigoGerado) + strlen(novoCodigo) + 1;
-        char *temp = (char *)malloc(novoTamanho);
+        size_t tamanhoNovo = strlen(codigoGerado) + strlen(novoCodigo) + 1;
+        char *temp = (char *)malloc(tamanhoNovo);
         if (temp == NULL) {
             fprintf(stderr, "Falha na alocação de memória\n");
             exit(1);
@@ -100,12 +165,12 @@ void appendCode(const char *novoCodigo) {
     }
 }
 
-void appendConstantes(const char *novaConstante) {
+void acrescentarConstantes(const char *novaConstante) {
     if (constantesGlobais == NULL) {
         constantesGlobais = strdup(novaConstante);
     } else {
-        size_t novoTamanho = strlen(constantesGlobais) + strlen(novaConstante) + 1;
-        char *temp = (char *)malloc(novoTamanho);
+        size_t tamanhoNovo = strlen(constantesGlobais) + strlen(novaConstante) + 1;
+        char *temp = (char *)malloc(tamanhoNovo);
         if (temp == NULL) {
             fprintf(stderr, "Falha na alocação de memória\n");
             exit(1);
@@ -146,30 +211,21 @@ void gerarErroTipoIncompativel(const char *nomeVar, const char *tipoEsperado) {
 int verificarTipoAtribuicao(char *nomeVar, char *tipoVar, char *valor) {
     int tipoValor = 0; // 0: indefinido, 1: inteiro, 2: string
 
-    // Verificar se "valor" é um número inteiro
     char *endptr;
     strtol(valor, &endptr, 10);
-
     if (*endptr == '\0') {
-        tipoValor = 1; // inteiro
+        tipoValor = 1;
+    } else if (valor[0] == '"' && valor[strlen(valor) - 1] == '"') {
+        tipoValor = 2;
     }
-
-    // Verificar se "valor" é uma string (começa e termina com aspas)
-    else if (valor[0] == '"' && valor[strlen(valor) - 1] == '"') {
-        tipoValor = 2; // string
-    }
-
-    // Comparar tipos e gerar mensagem de erro
     if (strcmp(tipoVar, "int") == 0 && tipoValor != 1) {
         gerarErroTipoIncompativel(nomeVar, "int");
         return 0;
     }
-
     if (strcmp(tipoVar, "String") == 0 && tipoValor != 2) {
         gerarErroTipoIncompativel(nomeVar, "String");
         return 0;
     }
-
     return 1;
 }
 
@@ -230,14 +286,15 @@ void liberarPinosEntrada() { liberarPinos(&pinosEntrada); }
 void adicionarPinoSaida(const char *nome) { adicionarPino(&pinosSaida, nome); }
 int pinoSaidaConfigurado(const char *nome) { return pinoConfigurado(pinosSaida, nome); }
 void liberarPinosSaida() { liberarPinos(&pinosSaida); }
-
 %}
 
-/* Declaração dos tipos de dados utilizados no %union */
+/* ======================================================= */
+/* Definição do %union – agora inclui o ponteiro para SemInfo */
 %union {
     char *str;
     int num;
     char *id;
+    struct SemInfo *info;
 }
 
 /* Tokens terminais */
@@ -260,34 +317,63 @@ void liberarPinosSaida() { liberarPinos(&pinosSaida); }
 %left MULTIPLICACAO DIVISAO MODULO
 %right IGUAL
 
-/* Declaração de não terminais */
-%type <str> programa declaracoes declaracao configuracao loop comandos comando atribuicao
-%type <str> tipo listaIdentificadores
-%type <str> configuracaoPino configuracaoPWM configuracaoSerial conexaoWifi controleFluxo
-%type <str> condicional repeticao operacaoHardware expressao
+/* Para os não-terminais que geram código e árvore, usamos o tipo <info> */
+%type <info> programa declaracoes declaracao configuracao loop comandos comando atribuicao expressao configuracaoPino configuracaoPWM configuracaoSerial conexaoWifi controleFluxo condicional repeticao operacaoHardware listaIdentificadores tipo
 
 %%
 
 programa:
     declaracoes configuracao loop {
-        char *temp = malloc(strlen($1) + (constantesGlobais ? strlen(constantesGlobais) : 0) + strlen($2) + strlen($3) + 100);
-        sprintf(temp, "#include <Arduino.h>\n#include <WiFi.h>\n#include <HTTPClient.h>\n\n%s%s%s%s", $1, constantesGlobais ? constantesGlobais : "", $2, $3);
-        appendCode(temp);
-        $$ = temp;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) +
+                  (constantesGlobais ? strlen(constantesGlobais) : 0) +
+                  strlen($2->codigo) + strlen($3->codigo) + 100;
+        char *temp = malloc(len);
+        sprintf(temp, "#include <Arduino.h>\n#include <WiFi.h>\n#include <HTTPClient.h>\n\n%s%s%s%s",
+                $1->codigo, (constantesGlobais ? constantesGlobais : ""), $2->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("programa");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, $2->no);
+        adicionarFilho(info->no, $3->no);
+        acrescentarCodigo(temp);
+        arvoreSintatica = info->no; /* Guarda a raiz da árvore */
+        $$ = info;
     }
+    ;
 
 declaracoes:
-    /* vazio */ { $$ = strdup(""); }
-    | declaracao declaracoes { 
-        char *temp = malloc(strlen($1) + strlen($2) + 2);
-        sprintf(temp, "%s%s", $1, $2);
-        $$ = temp;
+    /* vazio */
+    {
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = strdup("");
+        info->no = novoNoArvore("declaracoes (vazio)");
+        $$ = info;
+    }
+    | declaracao declaracoes {
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($2->codigo) + 1;
+        char *temp = malloc(len);
+        sprintf(temp, "%s%s", $1->codigo, $2->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("declaracoes");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, $2->no);
+        $$ = info;
     }
     ;
 
 declaracao:
     VAR tipo DOISPONTOS listaIdentificadores PONTOEVIRGULA {
-        $$ = strdup($4);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = strdup($4->codigo);
+        info->no = novoNoArvore("declaracao");
+        adicionarFilho(info->no, novoNoArvore("VAR"));
+        adicionarFilho(info->no, $2->no);
+        adicionarFilho(info->no, novoNoArvore(":"));
+        adicionarFilho(info->no, $4->no);
+        adicionarFilho(info->no, novoNoArvore(";"));
+        $$ = info;
     }
     ;
 
@@ -295,17 +381,26 @@ tipo:
     INTEIRO { 
         if (tipoAtual) free(tipoAtual);
         tipoAtual = strdup("int"); 
-        $$ = tipoAtual; 
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = strdup("int ");
+        info->no = novoNoArvore("INTEIRO");
+        $$ = info;
     }
     | TEXTO { 
         if (tipoAtual) free(tipoAtual);
         tipoAtual = strdup("String"); 
-        $$ = tipoAtual; 
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = strdup("String ");
+        info->no = novoNoArvore("TEXTO");
+        $$ = info;
     }
     | BOOLEANO { 
         if (tipoAtual) free(tipoAtual);
         tipoAtual = strdup("bool"); 
-        $$ = tipoAtual; 
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = strdup("bool ");
+        info->no = novoNoArvore("BOOLEANO");
+        $$ = info;
     }
     ;
 
@@ -322,14 +417,13 @@ listaIdentificadores:
             YYABORT;
         }
         adicionarVariavel($1, tipoAtual);
-        size_t tamanho = strlen(tipoAtual) + strlen($1) + 10;
-        char *codigo = (char *)malloc(tamanho);
-        if (codigo == NULL) {
-            yyerror("Falha na alocação de memória");
-            YYABORT;
-        }
-        snprintf(codigo, tamanho, "%s %s;\n", tipoAtual, $1);
-        $$ = codigo;
+        int tamanho = strlen(tipoAtual) + strlen($1) + 10;
+        char *codigo = malloc(tamanho);
+        sprintf(codigo, "%s %s;\n", tipoAtual, $1);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore($1);
+        $$ = info;
     }
     | listaIdentificadores VIRGULA IDENTIFICADOR {
         if (!tipoAtual) { 
@@ -343,43 +437,58 @@ listaIdentificadores:
             YYABORT;
         }
         adicionarVariavel($3, tipoAtual);
-        size_t tamanho = strlen($1) + strlen(tipoAtual) + strlen($3) + 10;
-        char *temp = (char *)malloc(tamanho);
-        if (temp == NULL) {
-            yyerror("Falha na alocação de memória");
-            YYABORT;
-        }
-        snprintf(temp, tamanho, "%s%s %s;\n", $1, tipoAtual, $3);
-        $$ = temp;
+        int tamanho = strlen($1->codigo) + strlen(tipoAtual) + strlen($3) + 10;
+        char *temp = malloc(tamanho);
+        sprintf(temp, "%s%s %s;\n", $1->codigo, tipoAtual, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = temp;
+        info->no = novoNoArvore("listaIdentificadores");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore(","));
+        adicionarFilho(info->no, novoNoArvore($3));
+        $$ = info;
     }
     ;
 
 configuracao:
     CONFIG comandos FIM {
-        char *codigo = malloc(strlen($2) + 50);
-        sprintf(codigo, "\nvoid setup()\n{\n%s}\n", $2);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($2->codigo) + 50;
+        char *codigo = malloc(len);
+        sprintf(codigo, "\nvoid setup()\n{\n%s}\n", $2->codigo);
+        info->codigo = codigo;
+        info->no = novoNoArvore("configuracao");
+        adicionarFilho(info->no, novoNoArvore("CONFIG"));
+        adicionarFilho(info->no, $2->no);
+        adicionarFilho(info->no, novoNoArvore("FIM"));
+        $$ = info;
     }
     ;
 
 comandos:
-    comando { $$ = strdup($1); }
+    comando { $$ = $1; }
     | comandos comando {
-        char *temp = malloc(strlen($1) + strlen($2) + 1);
-        strcpy(temp, $1);
-        strcat(temp, $2);
-        $$ = temp;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($2->codigo) + 1;
+        char *temp = malloc(len);
+        strcpy(temp, $1->codigo);
+        strcat(temp, $2->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("comandos");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, $2->no);
+        $$ = info;
     }
     ;
 
 comando:
-    atribuicao
-    | configuracaoPino
-    | configuracaoPWM
-    | configuracaoSerial
-    | conexaoWifi
-    | controleFluxo
-    | operacaoHardware
+      atribuicao            { $$ = $1; }
+    | configuracaoPino      { $$ = $1; }
+    | configuracaoPWM       { $$ = $1; }
+    | configuracaoSerial    { $$ = $1; }
+    | conexaoWifi           { $$ = $1; }
+    | controleFluxo         { $$ = $1; }
+    | operacaoHardware      { $$ = $1; }
     ;
 
 atribuicao:
@@ -387,182 +496,305 @@ atribuicao:
         if (!verificarVariavelDeclarada($1)) {
             YYABORT;
         }
-
-        // Verificando se o tipo da variável e da expressão são compatíveis
         char *tipoVar = obterTipoVariavel($1);
-        char *tipoExpr = $3;
-
-        if (!verificarTipoAtribuicao($1, tipoVar, tipoExpr)) {
+        if (!verificarTipoAtribuicao($1, tipoVar, $3->codigo)) {
             YYABORT;
         }
-
-        char *codigo = malloc(strlen($1) + strlen($3) + 10);
-        sprintf(codigo, "%s = %s;\n", $1, $3);
-        $$ = codigo;
+        int tamanho = strlen($1) + strlen($3->codigo) + 10;
+        char *codigo = malloc(tamanho);
+        sprintf(codigo, "%s = %s;\n", $1, $3->codigo);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("atribuicao");
+        adicionarFilho(info->no, novoNoArvore($1));
+        adicionarFilho(info->no, novoNoArvore("="));
+        adicionarFilho(info->no, $3->no);
+        adicionarFilho(info->no, novoNoArvore(";"));
+        $$ = info;
     }
     | IDENTIFICADOR IGUAL LER_DIGITAL IDENTIFICADOR PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($1)) {
-            YYABORT;
-        }
-        if (!verificarVariavelDeclarada($4)) {
-            YYABORT;
-        }
+        if (!verificarVariavelDeclarada($1)) { YYABORT; }
+        if (!verificarVariavelDeclarada($4)) { YYABORT; }
         if (!pinoEntradaConfigurado($4)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como entrada", $4);
             yyerror(erro);
             YYABORT;
         }
-        char *codigo = malloc(strlen($1) + strlen($4) + 30);
+        int tamanho = strlen($1) + strlen($4) + 30;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "%s = digitalRead(%s);\n", $1, $4);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("atribuicao (LER_DIGITAL)");
+        adicionarFilho(info->no, novoNoArvore($1));
+        adicionarFilho(info->no, novoNoArvore("="));
+        adicionarFilho(info->no, novoNoArvore("digitalRead"));
+        adicionarFilho(info->no, novoNoArvore("("));
+        adicionarFilho(info->no, novoNoArvore($4));
+        adicionarFilho(info->no, novoNoArvore(")"));
+        adicionarFilho(info->no, novoNoArvore(";"));
+        $$ = info;
     }
     | IDENTIFICADOR IGUAL LER_ANALOGICO IDENTIFICADOR PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($1)) {
-            YYABORT;
-        }
-        if (!verificarVariavelDeclarada($4)) {
-            YYABORT;
-        }
+        if (!verificarVariavelDeclarada($1)) { YYABORT; }
+        if (!verificarVariavelDeclarada($4)) { YYABORT; }
         if (!pinoEntradaConfigurado($4)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como entrada", $4);
             yyerror(erro);
             YYABORT;
         }
-        char *codigo = malloc(strlen($1) + strlen($4) + 30);
+        int tamanho = strlen($1) + strlen($4) + 30;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "%s = analogRead(%s);\n", $1, $4);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("atribuicao (LER_ANALOGICO)");
+        adicionarFilho(info->no, novoNoArvore($1));
+        adicionarFilho(info->no, novoNoArvore("="));
+        adicionarFilho(info->no, novoNoArvore("analogRead"));
+        adicionarFilho(info->no, novoNoArvore("("));
+        adicionarFilho(info->no, novoNoArvore($4));
+        adicionarFilho(info->no, novoNoArvore(")"));
+        adicionarFilho(info->no, novoNoArvore(";"));
+        $$ = info;
     }
     ;
 
 expressao:
     expressao MAIS expressao {
-        if (!verificarTipoParaOperacao($1, $3)) {
-            YYABORT;
-        }
-        $$ = strdup("operacao de soma");
-        sprintf($$, "%s + %s", $1, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($3->codigo) + 4;
+        char *temp = malloc(len);
+        sprintf(temp, "%s + %s", $1->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("expressao +");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore("+"));
+        adicionarFilho(info->no, $3->no);
+        $$ = info;
     }
     | expressao MENOS expressao {
-        if (!verificarTipoParaOperacao($1, $3)) {
-            YYABORT;
-        }
-        $$ = strdup("operacao de subtração");
-        sprintf($$, "%s - %s", $1, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($3->codigo) + 4;
+        char *temp = malloc(len);
+        sprintf(temp, "%s - %s", $1->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("expressao -");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore("-"));
+        adicionarFilho(info->no, $3->no);
+        $$ = info;
     }
     | expressao MULTIPLICACAO expressao {
-        if (!verificarTipoParaOperacao($1, $3)) {
-            YYABORT;
-        }
-        $$ = strdup("operacao de multiplicação");
-        sprintf($$, "%s * %s", $1, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($3->codigo) + 4;
+        char *temp = malloc(len);
+        sprintf(temp, "%s * %s", $1->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("expressao *");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore("*"));
+        adicionarFilho(info->no, $3->no);
+        $$ = info;
     }
     | expressao DIVISAO expressao {
-        if (!verificarTipoParaOperacao($1, $3)) {
-            YYABORT;
-        }
-        $$ = strdup("operacao de divisão");
-        sprintf($$, "%s / %s", $1, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($3->codigo) + 4;
+        char *temp = malloc(len);
+        sprintf(temp, "%s / %s", $1->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("expressao /");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore("/"));
+        adicionarFilho(info->no, $3->no);
+        $$ = info;
     }
     | expressao IGUAL_IGUAL expressao {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s == %s", $1, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($3->codigo) + 4;
+        char *temp = malloc(len);
+        sprintf(temp, "%s == %s", $1->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("expressao ==");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore("=="));
+        adicionarFilho(info->no, $3->no);
+        $$ = info;
     }
     | expressao DIFERENTE expressao {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s != %s", $1, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($3->codigo) + 4;
+        char *temp = malloc(len);
+        sprintf(temp, "%s != %s", $1->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("expressao !=");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore("!="));
+        adicionarFilho(info->no, $3->no);
+        $$ = info;
     }
     | expressao MENOR expressao {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s < %s", $1, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($3->codigo) + 4;
+        char *temp = malloc(len);
+        sprintf(temp, "%s < %s", $1->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("expressao <");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore("<"));
+        adicionarFilho(info->no, $3->no);
+        $$ = info;
     }
     | expressao MAIOR expressao {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s > %s", $1, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($3->codigo) + 4;
+        char *temp = malloc(len);
+        sprintf(temp, "%s > %s", $1->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("expressao >");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore(">"));
+        adicionarFilho(info->no, $3->no);
+        $$ = info;
     }
     | expressao MENOR_IGUAL expressao {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s <= %s", $1, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($3->codigo) + 4;
+        char *temp = malloc(len);
+        sprintf(temp, "%s <= %s", $1->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("expressao <=");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore("<="));
+        adicionarFilho(info->no, $3->no);
+        $$ = info;
     }
     | expressao MAIOR_IGUAL expressao {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s >= %s", $1, $3);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        int len = strlen($1->codigo) + strlen($3->codigo) + 4;
+        char *temp = malloc(len);
+        sprintf(temp, "%s >= %s", $1->codigo, $3->codigo);
+        info->codigo = temp;
+        info->no = novoNoArvore("expressao >=");
+        adicionarFilho(info->no, $1->no);
+        adicionarFilho(info->no, novoNoArvore(">="));
+        adicionarFilho(info->no, $3->no);
+        $$ = info;
     }
     | NUMERO {
-        $$ = malloc(20);
-        sprintf($$, "%d", $1);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        char buffer[20];
+        sprintf(buffer, "%d", $1);
+        info->codigo = strdup(buffer);
+        info->no = novoNoArvore(buffer);
+        $$ = info;
     }
     | IDENTIFICADOR {
         if (!verificarVariavelDeclarada($1)) {
             YYABORT;
         }
-        $$ = strdup($1);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = strdup($1);
+        info->no = novoNoArvore($1);
+        $$ = info;
     }
     | STRING {
-        $$ = strdup($1);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = strdup($1);
+        info->no = novoNoArvore($1);
+        $$ = info;
     }
     ;
 
 configuracaoPino:
     CONFIGURAR IDENTIFICADOR COMO SAIDA PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($2)) {
-            YYABORT;
-        }
+        if (!verificarVariavelDeclarada($2)) { YYABORT; }
         adicionarPinoSaida($2);
-        char *codigo = malloc(strlen($2) + 30);
+        int tamanho = strlen($2) + 30;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "pinMode(%s, OUTPUT);\n", $2);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("configuracaoPino (SAIDA)");
+        adicionarFilho(info->no, novoNoArvore("CONFIGURAR"));
+        adicionarFilho(info->no, novoNoArvore($2));
+        adicionarFilho(info->no, novoNoArvore("COMO"));
+        adicionarFilho(info->no, novoNoArvore("SAIDA"));
+        adicionarFilho(info->no, novoNoArvore(";"));
+        $$ = info;
     }
     | CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($2)) {
-            YYABORT;
-        }
+        if (!verificarVariavelDeclarada($2)) { YYABORT; }
         adicionarPinoEntrada($2);
-        char *codigo = malloc(strlen($2) + 30);
+        int tamanho = strlen($2) + 30;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "pinMode(%s, INPUT);\n", $2);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("configuracaoPino (ENTRADA)");
+        adicionarFilho(info->no, novoNoArvore("CONFIGURAR"));
+        adicionarFilho(info->no, novoNoArvore($2));
+        adicionarFilho(info->no, novoNoArvore("COMO"));
+        adicionarFilho(info->no, novoNoArvore("ENTRADA"));
+        adicionarFilho(info->no, novoNoArvore(";"));
+        $$ = info;
     }
     ;
 
 configuracaoPWM:
     CONFIGURARPWM IDENTIFICADOR COM FREQUENCIA NUMERO RESOLUCAO NUMERO PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($2)) {
-            YYABORT;
-        }
-
+        if (!verificarVariavelDeclarada($2)) { YYABORT; }
         adicionarPinoPWM($2);
-
         char constantes[200];
         char codigo[200];
-
         sprintf(constantes, "\nconst int canalPWM = 0;\nconst int frequencia = %d;\nconst int resolucao = %d;\n", $5, $7);
-        appendConstantes(constantes);
-
+        acrescentarConstantes(constantes);
         sprintf(codigo, "ledcSetup(canalPWM, frequencia, resolucao);\nledcAttachPin(%s, canalPWM);\n", $2);
-        $$ = strdup(codigo);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = strdup(codigo);
+        info->no = novoNoArvore("configuracaoPWM");
+        adicionarFilho(info->no, novoNoArvore("CONFIGURARPWM"));
+        adicionarFilho(info->no, novoNoArvore($2));
+        adicionarFilho(info->no, novoNoArvore("COM FREQUENCIA"));
+        adicionarFilho(info->no, novoNoArvore("NUMERO"));
+        adicionarFilho(info->no, novoNoArvore("RESOLUCAO"));
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     ;
 
 configuracaoSerial:
     CONFIGURARSERIAL NUMERO PONTOEVIRGULA {
-        char *codigo = malloc(50);
+        int tamanho = 50;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "Serial.begin(%d);\n", $2);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("configuracaoSerial");
+        adicionarFilho(info->no, novoNoArvore("CONFIGURARSERIAL"));
+        adicionarFilho(info->no, novoNoArvore("NUMERO"));
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     ;
 
 conexaoWifi:
     CONECTARWIFI IDENTIFICADOR IDENTIFICADOR PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($2)) {
-            YYABORT;
-        }
-        if (!verificarVariavelDeclarada($3)) {
-            YYABORT;
-        }
-        char *codigo = malloc(strlen($2) + strlen($3) + 170);
+        if (!verificarVariavelDeclarada($2)) { YYABORT; }
+        if (!verificarVariavelDeclarada($3)) { YYABORT; }
+        int tamanho = strlen($2) + strlen($3) + 170;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "WiFi.begin(%s.c_str(), %s.c_str());\nwhile (WiFi.status() != WL_CONNECTED)\n{\n    delay(500);\n    Serial.println(\"Conectando ao WiFi...\");\n}\nSerial.println(\"Conectado ao WiFi!\");\n", $2, $3);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("conexaoWifi");
+        adicionarFilho(info->no, novoNoArvore("CONECTARWIFI"));
+        adicionarFilho(info->no, novoNoArvore($2));
+        adicionarFilho(info->no, novoNoArvore($3));
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     ;
 
@@ -573,117 +805,206 @@ controleFluxo:
 
 condicional:
     SE expressao ENTAO comandos SENAO comandos FIM {
-        char *codigo = malloc(strlen($2) + strlen($4) + strlen($6) + 50);
-        sprintf(codigo, "if (%s)\n{\n%s}\nelse\n{\n%s}\n", $2, $4, $6);
-        $$ = codigo;
+        int tamanho = strlen($2->codigo) + strlen($4->codigo) + strlen($6->codigo) + 50;
+        char *codigo = malloc(tamanho);
+        sprintf(codigo, "if (%s)\n{\n%s}\nelse\n{\n%s}\n", $2->codigo, $4->codigo, $6->codigo);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("condicional");
+        adicionarFilho(info->no, novoNoArvore("SE"));
+        adicionarFilho(info->no, $2->no);
+        adicionarFilho(info->no, novoNoArvore("ENTAO"));
+        adicionarFilho(info->no, $4->no);
+        adicionarFilho(info->no, novoNoArvore("SENAO"));
+        adicionarFilho(info->no, $6->no);
+        adicionarFilho(info->no, novoNoArvore("FIM"));
+        $$ = info;
     }
     | SE expressao ENTAO comandos FIM {
-        char *codigo = malloc(strlen($2) + strlen($4) + 30);
-        sprintf(codigo, "if (%s)\n{\n%s}\n", $2, $4);
-        $$ = codigo;
+        int tamanho = strlen($2->codigo) + strlen($4->codigo) + 30;
+        char *codigo = malloc(tamanho);
+        sprintf(codigo, "if (%s)\n{\n%s}\n", $2->codigo, $4->codigo);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("condicional");
+        adicionarFilho(info->no, novoNoArvore("SE"));
+        adicionarFilho(info->no, $2->no);
+        adicionarFilho(info->no, novoNoArvore("ENTAO"));
+        adicionarFilho(info->no, $4->no);
+        adicionarFilho(info->no, novoNoArvore("FIM"));
+        $$ = info;
     }
     ;
 
 repeticao:
     ENQUANTO expressao FIM comandos FIM {
-        char *codigo = malloc(strlen($2) + strlen($4) + 30);
-        sprintf(codigo, "while (%s)\n{\n%s}\n", $2, $4);
-        $$ = codigo;
+        int tamanho = strlen($2->codigo) + strlen($4->codigo) + 30;
+        char *codigo = malloc(tamanho);
+        sprintf(codigo, "while (%s)\n{\n%s}\n", $2->codigo, $4->codigo);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("repeticao");
+        adicionarFilho(info->no, novoNoArvore("ENQUANTO"));
+        adicionarFilho(info->no, $2->no);
+        adicionarFilho(info->no, novoNoArvore("FIM"));
+        adicionarFilho(info->no, $4->no);
+        adicionarFilho(info->no, novoNoArvore("FIM"));
+        $$ = info;
     }
     ;
 
 operacaoHardware:
     LIGAR IDENTIFICADOR PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($2)) {
-            YYABORT;
-        }
+        if (!verificarVariavelDeclarada($2)) { YYABORT; }
         if (!pinoSaidaConfigurado($2)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como saída", $2);
             yyerror(erro);
             YYABORT;
         }
-        char *codigo = malloc(strlen($2) + 20);
+        int tamanho = strlen($2) + 20;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "digitalWrite(%s, HIGH);\n", $2);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("operacaoHardware (LIGAR)");
+        adicionarFilho(info->no, novoNoArvore("LIGAR"));
+        adicionarFilho(info->no, novoNoArvore($2));
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     | DESLIGAR IDENTIFICADOR PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($2)) {
-            YYABORT;
-        }
+        if (!verificarVariavelDeclarada($2)) { YYABORT; }
         if (!pinoSaidaConfigurado($2)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como saída", $2);
             yyerror(erro);
             YYABORT;
         }
-        char *codigo = malloc(strlen($2) + 25);
+        int tamanho = strlen($2) + 25;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "digitalWrite(%s, LOW);\n", $2);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("operacaoHardware (DESLIGAR)");
+        adicionarFilho(info->no, novoNoArvore("DESLIGAR"));
+        adicionarFilho(info->no, novoNoArvore($2));
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     | AJUSTARPWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($2)) {
-            YYABORT;
-        }
+        if (!verificarVariavelDeclarada($2)) { YYABORT; }
         if (!pinoPWMConfigurado($2)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado para PWM", $2);
             yyerror(erro);
             YYABORT;
         }
-        if (!verificarVariavelDeclarada($5)) {
-            YYABORT;
-        }
-        char *codigo = malloc(strlen($2) + strlen($5) + 40);
+        if (!verificarVariavelDeclarada($5)) { YYABORT; }
+        int tamanho = strlen($2) + strlen($5) + 40;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "ledcWrite(%s, %s);\n", $2, $5);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("operacaoHardware (AJUSTARPWM)");
+        adicionarFilho(info->no, novoNoArvore("AJUSTARPWM"));
+        adicionarFilho(info->no, novoNoArvore($2));
+        adicionarFilho(info->no, novoNoArvore("COM"));
+        adicionarFilho(info->no, novoNoArvore("VALOR"));
+        adicionarFilho(info->no, novoNoArvore($5));
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     | ESPERAR NUMERO PONTOEVIRGULA {
-        char *codigo = malloc(20);
+        int tamanho = 20;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "delay(%d);\n", $2);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("operacaoHardware (ESPERAR)");
+        adicionarFilho(info->no, novoNoArvore("ESPERAR"));
+        adicionarFilho(info->no, novoNoArvore("NUMERO"));
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     | ESCREVER_SERIAL expressao PONTOEVIRGULA {
-        char *codigo = malloc(strlen($2) + 30);
-        sprintf(codigo, "Serial.println(%s);\n", $2);
-        $$ = codigo;
+        int tamanho = strlen($2->codigo) + 30;
+        char *codigo = malloc(tamanho);
+        sprintf(codigo, "Serial.println(%s);\n", $2->codigo);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("operacaoHardware (ESCREVER_SERIAL)");
+        adicionarFilho(info->no, novoNoArvore("ESCREVER_SERIAL"));
+        adicionarFilho(info->no, $2->no);
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     | LER_SERIAL IDENTIFICADOR PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($2)) {
-            YYABORT;
-        }
-        char *codigo = malloc(strlen($2) + 30);
+        if (!verificarVariavelDeclarada($2)) { YYABORT; }
+        int tamanho = strlen($2) + 30;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "%s = Serial.readString();\n", $2);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("operacaoHardware (LER_SERIAL)");
+        adicionarFilho(info->no, novoNoArvore("LER_SERIAL"));
+        adicionarFilho(info->no, novoNoArvore($2));
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     | ENVIAR_HTTP expressao expressao PONTOEVIRGULA {
-        char *codigo = malloc(strlen($2) + strlen($3) + 500);
-        sprintf(codigo, "if (WiFi.status() == WL_CONNECTED)\n{\n    http.begin(%s);\n    int httpResponseCode = http.GET();\n    if (httpResponseCode > 0) {\n        Serial.print(\"Resposta HTTP: \");\n        Serial.println(httpResponseCode);\n    } else {\n        Serial.print(\"Erro na requisição: \");\n        Serial.println(httpResponseCode);\n    }\n    http.end();\n} else {\n    Serial.println(\"WiFi desconectado, tentando reconectar...\");\n    WiFi.begin(%s, %s);\n}\n", $2, $2, $3);
-        $$ = codigo;
+        int tamanho = strlen($2->codigo) + strlen($3->codigo) + 500;
+        char *codigo = malloc(tamanho);
+        sprintf(codigo, "if (WiFi.status() == WL_CONNECTED)\n{\n    http.begin(%s);\n    int httpResponseCode = http.GET();\n    if (httpResponseCode > 0) {\n        Serial.print(\"Resposta HTTP: \");\n        Serial.println(httpResponseCode);\n    } else {\n        Serial.print(\"Erro na requisição: \");\n        Serial.println(httpResponseCode);\n    }\n    http.end();\n} else {\n    Serial.println(\"WiFi desconectado, tentando reconectar...\");\n    WiFi.begin(%s, %s);\n}\n", $2->codigo, $2->codigo, $3->codigo);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("operacaoHardware (ENVIAR_HTTP)");
+        adicionarFilho(info->no, novoNoArvore("ENVIAR_HTTP"));
+        adicionarFilho(info->no, $2->no);
+        adicionarFilho(info->no, $3->no);
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     | LER_DIGITAL IDENTIFICADOR PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($2)) {
-            YYABORT;
-        }
-        char *codigo = malloc(strlen($2) + 30);
+        if (!verificarVariavelDeclarada($2)) { YYABORT; }
+        int tamanho = strlen($2) + 30;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "%s = digitalRead(%s);\n", $2, $2);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("operacaoHardware (LER_DIGITAL)");
+        adicionarFilho(info->no, novoNoArvore("LER_DIGITAL"));
+        adicionarFilho(info->no, novoNoArvore($2));
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     | LER_ANALOGICO IDENTIFICADOR PONTOEVIRGULA {
-        if (!verificarVariavelDeclarada($2)) {
-            YYABORT;
-        }
-        char *codigo = malloc(strlen($2) + 30);
+        if (!verificarVariavelDeclarada($2)) { YYABORT; }
+        int tamanho = strlen($2) + 30;
+        char *codigo = malloc(tamanho);
         sprintf(codigo, "%s = analogRead(%s);\n", $2, $2);
-        $$ = codigo;
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("operacaoHardware (LER_ANALOGICO)");
+        adicionarFilho(info->no, novoNoArvore("LER_ANALOGICO"));
+        adicionarFilho(info->no, novoNoArvore($2));
+        adicionarFilho(info->no, novoNoArvore("PONTOEVIRGULA"));
+        $$ = info;
     }
     ;
 
 loop:
     REPITA comandos FIM {
-        char *codigo = malloc(strlen($2) + 30);
-        sprintf(codigo, "\nvoid loop()\n{\n%s}\n", $2);
-        $$ = codigo;
+        int tamanho = strlen($2->codigo) + 30;
+        char *codigo = malloc(tamanho);
+        sprintf(codigo, "\nvoid loop()\n{\n%s}\n", $2->codigo);
+        SemInfo *info = malloc(sizeof(SemInfo));
+        info->codigo = codigo;
+        info->no = novoNoArvore("loop");
+        adicionarFilho(info->no, novoNoArvore("REPITA"));
+        adicionarFilho(info->no, $2->no);
+        adicionarFilho(info->no, novoNoArvore("FIM"));
+        $$ = info;
     }
     ;
 
@@ -710,30 +1031,60 @@ int main(int argc, char **argv) {
     yyparse();
 
     if (codigoGerado) {
+        char nomeBase[256];
         char *entrada = argv[1];
+        /* Extrai apenas o nome do arquivo (removendo o caminho) */
         char *nomeArquivo = strrchr(entrada, '/');
         nomeArquivo = (nomeArquivo) ? nomeArquivo + 1 : entrada;
-
-        char saida[256];
-        snprintf(saida, sizeof(saida), "langs/%s", nomeArquivo);
-
-        char *ponto = strrchr(saida, '.');
+        /* Copia para nomeBase e remove a extensão, se houver */
+        strncpy(nomeBase, nomeArquivo, sizeof(nomeBase));
+        nomeBase[sizeof(nomeBase) - 1] = '\0';
+        char *ponto = strrchr(nomeBase, '.');
         if (ponto) {
-            strcpy(ponto, ".cpp");
-        } else {
-            strcat(saida, ".cpp");
+            *ponto = '\0';
         }
 
-        FILE *arquivo = fopen(saida, "w");
+        /* Monta o nome do arquivo cpp, por exemplo: langs/exemplo_codigo.cpp */
+        char saidaCpp[256];
+        snprintf(saidaCpp, sizeof(saidaCpp), "langs/%s_codigo.cpp", nomeBase);
+
+        FILE *arquivo = fopen(saidaCpp, "w");
         if (arquivo) {
             fprintf(arquivo, "%s", codigoGerado);
             fclose(arquivo);
-            printf("Código gerado salvo em: %s\n", saida);
         } else {
             perror("Erro ao criar o arquivo de saída");
         }
-
         free(codigoGerado);
+    }
+
+    /* Exporta a árvore sintática para um arquivo com nome baseado no arquivo de entrada */
+    if (arvoreSintatica) {
+        char nomeBase[256];
+        char *nomeArquivo = strrchr(argv[1], '/');
+        nomeArquivo = (nomeArquivo) ? nomeArquivo + 1 : argv[1];
+        strncpy(nomeBase, nomeArquivo, sizeof(nomeBase));
+        nomeBase[sizeof(nomeBase)-1] = '\0';
+        
+        /* Remove a extensão, se houver */
+        char *ponto = strrchr(nomeBase, '.');
+        if (ponto) {
+            *ponto = '\0';
+        }
+
+        /* Monta o nome do arquivo da árvore, por exemplo: langs/exemplo_arvore.txt */
+        char saidaArvore[256];
+        snprintf(saidaArvore, sizeof(saidaArvore), "langs/%s_arvore.txt", nomeBase);
+
+        FILE *arquivoArvore = fopen(saidaArvore, "w");
+        if (arquivoArvore) {
+            exportarArvoreParaArquivo(arvoreSintatica, 0, arquivoArvore);
+            fclose(arquivoArvore);
+            printf("Árvore sintática exportada para: %s\n", saidaArvore);
+        } else {
+            perror("Erro ao criar o arquivo de visualização da árvore");
+        }
+        liberarArvore(arvoreSintatica);
     }
 
     liberarVariaveis();
