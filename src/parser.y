@@ -4,6 +4,17 @@
 #include <string.h>
 #include <ctype.h>
 
+void erroSintatico(const char *msg) {
+    extern int yylineno;
+    fprintf(stderr, "Erro Sintático (linha %d): %s\n", yylineno, msg);
+}
+
+void erroSemantico(const char *msg) {
+    extern int yylineno;
+    fprintf(stderr, "Erro Semântico (linha %d): %s\n", yylineno, msg);
+}
+
+/* ======================================================= */
 /* Estrutura para os nós da árvore sintática */
 typedef struct NoArvore {
     char *rotulo;
@@ -68,7 +79,6 @@ typedef struct SemInfo {
     NoArvore *no;
 } SemInfo;
 
-
 NoArvore *arvoreSintatica = NULL;
 
 void yyerror(const char *s);
@@ -111,7 +121,7 @@ int verificarVariavelDeclarada(const char *nome) {
     if (!variavelJaDeclarada(nome)) {
         char erro[256];
         snprintf(erro, sizeof(erro), "Variável '%s' não foi declarada antes do uso", nome);
-        yyerror(erro);
+        erroSemantico(erro);
         return 0;
     }
     return 1;
@@ -192,11 +202,11 @@ int verificarTipoParaOperacao(char *var1, char *var2) {
         v2 = v2->prox;
     }
     if (v1 == NULL || v2 == NULL) {
-        yyerror("Variáveis não declaradas");
+        erroSemantico("Variáveis não declaradas");
         return 0;
     }
     if (strcmp(v1->tipo, "int") != 0 || strcmp(v2->tipo, "int") != 0) {
-        yyerror("Operações aritméticas permitidas apenas para variáveis inteiras");
+        erroSemantico("Operações aritméticas permitidas apenas para variáveis inteiras");
         return 0;
     }
     return 1;
@@ -205,7 +215,7 @@ int verificarTipoParaOperacao(char *var1, char *var2) {
 void gerarErroTipoIncompativel(const char *nomeVar, const char *tipoEsperado) {
     char mensagem[256];
     snprintf(mensagem, sizeof(mensagem), "Tipos incompatíveis na atribuição. A variável '%s' deve ser do tipo %s.", nomeVar, tipoEsperado);
-    yyerror(mensagem);
+    erroSemantico(mensagem);
 }
 
 int verificarTipoAtribuicao(char *nomeVar, char *tipoVar, char *valor) {
@@ -407,13 +417,13 @@ tipo:
 listaIdentificadores:
     IDENTIFICADOR { 
         if (!tipoAtual) { 
-            yyerror("tipo não definido antes dos identificadores."); 
+            erroSemantico("tipo não definido antes dos identificadores."); 
             YYABORT; 
         }
         if (variavelJaDeclarada($1)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Variável '%s' já foi declarada", $1);
-            yyerror(erro);
+            erroSemantico(erro);
             YYABORT;
         }
         adicionarVariavel($1, tipoAtual);
@@ -427,13 +437,13 @@ listaIdentificadores:
     }
     | listaIdentificadores VIRGULA IDENTIFICADOR {
         if (!tipoAtual) { 
-            yyerror("tipo não definido antes dos identificadores."); 
+            erroSemantico("tipo não definido antes dos identificadores."); 
             YYABORT; 
         }
         if (variavelJaDeclarada($3)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Variável '%s' já foi declarada", $3);
-            yyerror(erro);
+            erroSemantico(erro);
             YYABORT;
         }
         adicionarVariavel($3, tipoAtual);
@@ -518,7 +528,7 @@ atribuicao:
         if (!pinoEntradaConfigurado($4)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como entrada", $4);
-            yyerror(erro);
+            erroSemantico(erro);
             YYABORT;
         }
         int tamanho = strlen($1) + strlen($4) + 30;
@@ -542,7 +552,7 @@ atribuicao:
         if (!pinoEntradaConfigurado($4)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como entrada", $4);
-            yyerror(erro);
+            erroSemantico(erro);
             YYABORT;
         }
         int tamanho = strlen($1) + strlen($4) + 30;
@@ -859,7 +869,7 @@ operacaoHardware:
         if (!pinoSaidaConfigurado($2)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como saída", $2);
-            yyerror(erro);
+            erroSemantico(erro);
             YYABORT;
         }
         int tamanho = strlen($2) + 20;
@@ -878,7 +888,7 @@ operacaoHardware:
         if (!pinoSaidaConfigurado($2)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado como saída", $2);
-            yyerror(erro);
+            erroSemantico(erro);
             YYABORT;
         }
         int tamanho = strlen($2) + 25;
@@ -897,7 +907,7 @@ operacaoHardware:
         if (!pinoPWMConfigurado($2)) {
             char erro[256];
             snprintf(erro, sizeof(erro), "Pino '%s' não foi configurado para PWM", $2);
-            yyerror(erro);
+            erroSemantico(erro);
             YYABORT;
         }
         if (!verificarVariavelDeclarada($5)) { YYABORT; }
@@ -1011,9 +1021,8 @@ loop:
 %%
 
 void yyerror(const char *msg) {
-    extern int yylineno;
-    extern char *yytext;
-    fprintf(stderr, "Erro de sintaxe na linha %d: %s\n", yylineno, msg);
+    /* Os erros chamados via yyerror são erros sintáticos */
+    erroSintatico(msg);
 }
 
 int main(int argc, char **argv) {

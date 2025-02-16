@@ -1,6 +1,13 @@
 %{
 #include "parser.tab.h"
 #include <stdio.h>
+
+void erroLexico(const char *msg) {
+    extern int yylineno;
+    fprintf(stderr, "Erro Léxico (linha %d): %s\n", yylineno, msg);
+    exit(1);
+}
+
 %}
 
 %%
@@ -63,6 +70,12 @@
 \"[^\"]*\"              { yylval.str = strdup(yytext); printf("Token: STRING, Valor: %s\n", yytext); return STRING; }
 [ \t]                   { /* Ignora espaços e tabs */ }
 "//".*                  { /* Ignora comentários de linha */ }
+
+. {
+    char errMsg[256];
+    snprintf(errMsg, sizeof(errMsg), "Caractere inesperado: '%s'", yytext);
+    erroLexico(errMsg);
+}
 
 %%
 
