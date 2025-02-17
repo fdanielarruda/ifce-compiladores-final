@@ -1054,7 +1054,7 @@ int main(int argc, char **argv) {
         }
 
         /* Monta o nome do arquivo cpp, por exemplo: langs/exemplo_codigo.cpp */
-        char saidaCpp[256];
+        char saidaCpp[256 + strlen("langs/%s_codigo.cpp")];
         snprintf(saidaCpp, sizeof(saidaCpp), "langs/%s_codigo.cpp", nomeBase);
 
         FILE *arquivo = fopen(saidaCpp, "w");
@@ -1082,7 +1082,7 @@ int main(int argc, char **argv) {
         }
 
         /* Monta o nome do arquivo da árvore, por exemplo: langs/exemplo_arvore.txt */
-        char saidaArvore[256];
+        char saidaArvore[256 + strlen("langs/%s_arvore.cpp")];
         snprintf(saidaArvore, sizeof(saidaArvore), "langs/%s_arvore.txt", nomeBase);
 
         FILE *arquivoArvore = fopen(saidaArvore, "w");
